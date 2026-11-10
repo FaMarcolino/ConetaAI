@@ -72,7 +72,7 @@ A entidade **Curtida** existe porque há dois sentidos de curtida (estudante →
 
 ## Modelo lógico (mapeamento ER → relacional)
 
-Mapeamento feito com o algoritmo ER → relacional visto na disciplina (Elmasri & Navathe, cap. 9), a partir do diagrama acima.
+Mapeamento feito com o algoritmo ER → relacional, a partir do diagrama acima.
 
 | Passo do algoritmo | O que se aplica ao ConetaAI | Resultado |
 |--------------------|-----------------------------|-----------|
