@@ -167,7 +167,6 @@ O modelo relacional não consegue expressar estas regras apenas com chaves e res
 - Toda vaga aceita **ao menos um** curso (participação `(1,n)` de `aceita`). A chave estrangeira sozinha permitiria uma vaga sem curso.
 - Só a empresa dona da vaga pode curtir candidatos dela, encerrá-la ou excluí-la.
 
-> **Observação para o SQL:** `MATCH` é palavra reservada em alguns SGBDs (por exemplo, MySQL). No script de criação da Etapa 4 a tabela pode precisar de aspas ou de outro nome.
 
 ## Tecnologias
 
