@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConetaAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<section class="tela ativa" id="tela-login">
+  <div class="login-caixa">
+    <div class="wordmark">Coneta<span>AI</span></div>
+    <div class="subtitulo">Conecte estudantes e empresas para o estágio certo.</div>
+    <div class="selo-tipo">
+      <button class="selecionada selecionado" id="tipoEstudante">Estudante</button>
+      <button id="tipoEmpresa">Empresa</button>
+    </div>
+    <form id="formLogin">
+      <div class="campo" id="campoEmail">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="voce@email.com">
+        <div class="erro">Digite um e-mail válido.</div>
+      </div>
+      <div class="campo" id="campoSenha">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="••••••••">
+        <div class="erro">A senha precisa de pelo menos 6 caracteres.</div>
+      </div>
+      <div class="linha-extra">
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" style="width:auto;"> Manter conectado</label>
+        <a href="#">Esqueci minha senha</a>
+      </div>
+      <button type="submit" class="botao-primario">Entrar</button>
+    </form>
+    <div class="rodape-login">Ainda não tem conta? <a href="#" id="linkCadastro">Cadastre-se</a></div>
+  </div>
+</section>
+
+<!-- ===================== CADASTRO ===================== -->
+<section class="tela" id="tela-cadastro">
+  <div class="login-caixa caixa-larga">
+    <div class="wordmark">Coneta<span>AI</span></div>
+    <div class="subtitulo">Crie sua conta para começar.</div>
+    <div class="selo-tipo">
+      <button type="button" class="selecionado" id="cadTipoEstudante">Sou estudante</button>
+      <button type="button" id="cadTipoEmpresa">Sou empresa</button>
+    </div>
+
+    <form id="formCadastroEstudante">
+      <div class="campo"><label for="cadEstNome">Nome completo</label><input type="text" id="cadEstNome" required></div>
+      <div class="campo"><label for="cadEstEmail">E-mail</label><input type="email" id="cadEstEmail" required></div>
+      <div class="campo"><label for="cadEstSenha">Senha (mínimo 6 caracteres)</label><input type="password" id="cadEstSenha" minlength="6" required></div>
+      <div class="campo"><label for="cadEstCurso">Curso</label><select id="cadEstCurso" required></select></div>
+      <div class="linha-dupla">
+        <div class="campo"><label for="cadEstCidade">Cidade</label><input type="text" id="cadEstCidade" required></div>
+        <div class="campo"><label for="cadEstModalidade">Modalidade preferida</label>
+          <select id="cadEstModalidade"><option value="presencial">Presencial</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option></select>
+        </div>
+      </div>
+      <div class="campo"><label for="cadEstDisponibilidade">Disponibilidade (meses)</label><input type="number" id="cadEstDisponibilidade" min="1" required></div>
+      <div class="campo"><label>Habilidades (escolha quantas quiser)</label><div class="chips" id="cadEstHabilidades"></div></div>
+      <button type="submit" class="botao-primario">Criar conta de estudante</button>
+    </form>
+
+    <form id="formCadastroEmpresa" style="display:none;">
+      <div class="campo"><label for="cadEmpNome">Nome da empresa</label><input type="text" id="cadEmpNome" required></div>
+      <div class="campo"><label for="cadEmpEmail">E-mail</label><input type="email" id="cadEmpEmail" required></div>
+      <div class="campo"><label for="cadEmpSenha">Senha (mínimo 6 caracteres)</label><input type="password" id="cadEmpSenha" minlength="6" required></div>
+      <div class="linha-dupla">
+        <div class="campo"><label for="cadEmpSetor">Setor</label><input type="text" id="cadEmpSetor" placeholder="Ex.: Tecnologia" required></div>
+        <div class="campo"><label for="cadEmpCidade">Cidade</label><input type="text" id="cadEmpCidade" required></div>
+      </div>
+      <button type="submit" class="botao-primario">Criar conta de empresa</button>
+    </form>
+
+    <div class="rodape-login">Já tem conta? <a href="#" id="linkVoltarLogin">Entrar</a></div>
+  </div>
+</section>
+
+<!-- ===================== ÁREA ESTUDANTE ===================== -->
+<section class="tela" id="tela-estudante">
+  <div class="topbar">
+    <div class="lado-esq">
+      <div class="avatar-pequeno" id="avatarEstudante">?</div>
+      <div class="wordmark" style="font-size:18px;">Coneta<span>AI</span></div>
+    </div>
+    <div class="abas">
+      <button class="selecionada" data-aba-estudante="swipe">Vagas</button>
+      <button data-aba-estudante="busca">Buscar</button>
+      <button data-aba-estudante="matches">Matches</button>
+      <button data-aba-estudante="perfil">Perfil</button>
+    </div>
+    <button class="botao-sair" data-sair>Sair</button>
+  </div>
+
+  <div class="conteudo-swipe" id="painelEstudanteSwipe">
+    <div class="stage" id="stageEstudante"></div>
+    <div class="controles" id="controlesEstudante">
+      <button class="botao-redondo passar" id="btnPassarEstudante" aria-label="Passar">✕</button>
+      <button class="botao-redondo curtir" id="btnCurtirEstudante" aria-label="Curtir">♥</button>
+    </div>
+  </div>
+
+  <div class="conteudo" id="painelEstudanteBusca" style="display:none;">
+    <div class="titulo-secao">Buscar vagas</div>
+    <form id="formBusca" class="filtros-busca">
+      <div class="campo"><label for="buscaTexto">Cargo ou empresa</label><input type="text" id="buscaTexto" placeholder="Ex.: dados, Nortel"></div>
+      <div class="linha-dupla">
+        <div class="campo"><label for="buscaCidade">Cidade</label><input type="text" id="buscaCidade" placeholder="Qualquer"></div>
+        <div class="campo"><label for="buscaModalidade">Modalidade</label>
+          <select id="buscaModalidade"><option value="">Todas</option><option value="presencial">Presencial</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option></select>
+        </div>
+      </div>
+      <div class="campo"><label for="buscaTecnologia">Tecnologia</label><select id="buscaTecnologia"></select></div>
+      <div class="botoes-busca">
+        <button type="submit" class="botao-primario" style="width:auto; padding:11px 26px;">Buscar</button>
+        <button type="button" class="botao-cancelar" id="limparBusca">Limpar filtros</button>
+      </div>
+    </form>
+    <div class="resumo-busca" id="resumoBusca"></div>
+    <div class="lista-vagas" id="listaBusca"></div>
+  </div>
+
+  <div class="conteudo" id="painelEstudanteMatches" style="display:none;">
+    <div class="titulo-secao">Seus matches</div>
+    <div class="lista-matches" id="listaMatchesEstudante"></div>
+  </div>
+
+  <div class="conteudo" id="painelEstudantePerfil" style="display:none; max-width:520px;">
+    <div class="titulo-secao">Seu perfil</div>
+    <form id="formPerfilEstudante">
+      <div class="campo"><label>Nome</label><input type="text" id="perfilNome"></div>
+      <div class="linha-dupla">
+        <div class="campo"><label>Curso</label><select id="perfilCurso"></select></div>
+        <div class="campo"><label>Previsão de conclusão</label><input type="month" id="perfilConclusao"></div>
+      </div>
+      <div class="campo"><label>Habilidades</label><div class="chips" id="perfilHabilidades"></div></div>
+      <div class="campo"><label>Áreas de interesse</label><input type="text" id="perfilInteresses" placeholder="Ex.: Desenvolvimento web, Dados"></div>
+      <div class="linha-dupla">
+        <div class="campo"><label>Cidade</label><input type="text" id="perfilCidade"></div>
+        <div class="campo"><label>Modalidade preferida</label>
+          <select id="perfilModalidade"><option value="presencial">Presencial</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option></select>
+        </div>
+      </div>
+      <div class="campo"><label>Disponibilidade (meses)</label><input type="number" id="perfilDisponibilidade"></div>
+      <button type="submit" class="botao-primario" style="width:auto; padding:12px 26px;">Salvar alterações</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== ÁREA EMPRESA ===================== -->
+<section class="tela" id="tela-empresa">
+  <div class="topbar">
+    <div class="lado-esq">
+      <div class="avatar-pequeno" id="avatarEmpresa">?</div>
+      <div class="wordmark" style="font-size:18px;">Coneta<span>AI</span></div>
+    </div>
+    <div class="abas">
+      <button class="selecionada" data-aba-empresa="home">Início</button>
+      <button data-aba-empresa="matches">Matches</button>
+      <button data-aba-empresa="perfil">Página da empresa</button>
+    </div>
+    <button class="botao-sair" data-sair>Sair</button>
+  </div>
+
+  <!-- Home empresa -->
+  <div class="conteudo" id="painelEmpresaHome">
+    <h1 style="font-family:var(--font-display); font-size:27px; font-weight:600; margin:4px 0 4px;">Boas-vindas de volta.</h1>
+    <div style="color:var(--ink-soft); font-size:14px; margin-bottom:26px;">Resumo das suas vagas e candidatos.</div>
+
+    <div class="grade-stats">
+      <div class="stat-card"><div class="valor" id="statVagasAtivas">0</div><div class="rotulo">Vagas ativas</div></div>
+      <div class="stat-card"><div class="valor destaque" id="statCandidatosNovos">0</div><div class="rotulo">Novos candidatos compatíveis</div></div>
+      <div class="stat-card"><div class="valor" id="statMatches">0</div><div class="rotulo">Matches este mês</div></div>
+    </div>
+
+    <div class="secao-titulo">
+      <h3>Suas vagas</h3>
+      <button class="botao-acento" id="botaoNovaVaga">+ Nova vaga</button>
+    </div>
+    <div class="lista-vagas" id="listaVagasEmpresa"></div>
+  </div>
+
+  <!-- Swipe de candidatos -->
+  <div class="conteudo-swipe" id="painelEmpresaSwipe" style="display:none;">
+    <button class="botao-voltar" id="voltarParaHomeEmpresa">← Voltar para vagas</button>
+    <div style="font-size:13px; color:var(--ink-soft); margin-bottom:10px;" id="tituloVagaSwipe"></div>
+    <div class="stage" id="stageEmpresa"></div>
+    <div class="controles" id="controlesEmpresa">
+      <button class="botao-redondo passar" id="btnPassarEmpresa" aria-label="Passar">✕</button>
+      <button class="botao-redondo curtir" id="btnCurtirEmpresa" aria-label="Curtir">♥</button>
+    </div>
+  </div>
+
+  <!-- Matches empresa -->
+  <div class="conteudo" id="painelEmpresaMatches" style="display:none;">
+    <div class="titulo-secao">Matches da empresa</div>
+    <div class="lista-matches" id="listaMatchesEmpresa"></div>
+  </div>
+
+  <div class="conteudo" id="painelEmpresaPerfil" style="display:none; max-width:640px;">
+    <div class="titulo-secao">Página da empresa</div>
+
+    <div style="display:flex; align-items:center; gap:14px; background:var(--paper-raised); border:1px solid var(--line); border-radius:18px; padding:18px 20px; margin-bottom:20px;">
+      <div class="avatar-pequeno" style="width:52px; height:52px; font-size:20px;" id="previaAvatarEmpresa">N</div>
+      <div>
+        <div style="font-weight:600; font-size:16px;" id="previaNomeEmpresa">Nortel Sistemas</div>
+        <div style="font-size:12px; color:var(--ink-soft);" id="previaSetorEmpresa">Tecnologia da Informação · Belo Horizonte</div>
+      </div>
+      <span class="pill-score" style="margin-left:auto;">Como os estudantes veem</span>
+    </div>
+
+    <form id="formPerfilEmpresa">
+      <div class="campo"><label>Nome da empresa</label><input type="text" id="perfilEmpresaNome"></div>
+      <div class="linha-dupla">
+        <div class="campo"><label>Setor</label><input type="text" id="perfilEmpresaSetor"></div>
+        <div class="campo"><label>Cidade principal</label><input type="text" id="perfilEmpresaCidade"></div>
+      </div>
+      <div class="campo"><label>Sobre a empresa</label>
+        <textarea id="perfilEmpresaDescricao" rows="4" style="width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-size:13px; resize:vertical;"></textarea>
+      </div>
+      <div class="campo"><label>Site</label><input type="text" id="perfilEmpresaSite" placeholder="https://"></div>
+      <button type="submit" class="botao-primario" style="width:auto; padding:12px 26px;">Salvar alterações</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== MODAL NOVA VAGA ===================== -->
+<div class="overlay-modal" id="overlayModal">
+  <div class="modal">
+    <h3>Publicar nova vaga</h3>
+    <form id="formVaga">
+      <div class="campo"><label>Cargo</label><input type="text" id="novaVagaCargo" placeholder="Ex.: Estágio em Marketing Digital" required></div>
+      <div class="campo"><label>Cursos aceitos (escolha pelo menos um)</label><div class="chips" id="novaVagaCursos"></div></div>
+      <div class="linha-dupla">
+        <div class="campo"><label>Modalidade</label>
+          <select id="novaVagaModalidade"><option value="presencial">Presencial</option><option value="remoto">Remoto</option><option value="hibrido">Híbrido</option></select>
+        </div>
+        <div class="campo"><label>Localização</label><input type="text" id="novaVagaCidade" placeholder="Cidade"></div>
+      </div>
+      <div class="linha-dupla">
+        <div class="campo"><label>Faixa salarial</label><input type="text" id="novaVagaFaixaSalarial" placeholder="R$ 1.500 – R$ 2.000"></div>
+        <div class="campo"><label>Período mínimo (meses)</label><input type="number" id="novaVagaPeriodoMinimo" placeholder="6"></div>
+      </div>
+      <div class="campo"><label>Tecnologias / requisitos</label><div class="chips" id="novaVagaTecnologias"></div></div>
+      <div class="botoes-modal">
+        <button type="button" class="botao-cancelar" id="botaoCancelarVaga">Cancelar</button>
+        <button type="submit" class="botao-primario">Publicar vaga</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== OVERLAY DE MATCH (compartilhado) ===================== -->
+<div class="overlay" id="overlayMatch">
+  <div class="match-card">
+    <div class="simbolo-match"><div class="peca a"></div><div class="peca b"></div></div>
+    <h3>Deu match!</h3>
+    <p id="matchTexto"></p>
+    <div class="botoes-match">
+      <button id="abrirChatMatch">Enviar mensagem</button>
+      <button class="secundario" id="fecharMatch">Continuar buscando</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CHAT ===================== -->
+<section class="tela" id="tela-chat">
+  <div class="chat-topbar">
+    <button class="botao-voltar" id="voltarDoChat">←</button>
+    <div class="avatar-pequeno" id="chatAvatar">?</div>
+    <div>
+      <div class="nome" id="chatNome"></div>
+      <div class="contexto" id="chatContexto"></div>
+    </div>
+  </div>
+  <div class="chat-corpo" id="chatCorpo"></div>
+  <div class="chat-rodape">
+    <input type="text" id="chatInput" placeholder="Escreva uma mensagem...">
+    <button id="chatEnviar" aria-label="Enviar">➤</button>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
