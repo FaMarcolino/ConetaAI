@@ -337,7 +337,7 @@ async function decidirEstudante(gostou) {
     try {
       const resposta = await apiFetch("/likes", {
         method: "POST",
-        body: JSON.stringify({ tipo: "estudante_para_vaga", estudanteId: sessao.usuario.id, vagaId: vaga.id }),
+        body: JSON.stringify({ origem: "estudante", estudanteId: sessao.usuario.id, vagaId: vaga.id }),
       });
       if (resposta.houveMatch) {
         mostrarMatch(
@@ -414,7 +414,7 @@ async function curtirPelaBusca(vagaId, vagas) {
   try {
     const resposta = await apiFetch("/likes", {
       method: "POST",
-      body: JSON.stringify({ tipo: "estudante_para_vaga", estudanteId: sessao.usuario.id, vagaId }),
+      body: JSON.stringify({ origem: "estudante", estudanteId: sessao.usuario.id, vagaId }),
     });
     estado.feedDesatualizado = true;
     await buscarVagas();
@@ -597,7 +597,10 @@ async function renderizarHomeEmpresa() {
   });
 
   try {
-    const matches = await apiFetch(`/matches?empresaId=${sessao.usuario.id}`);
+    // "Matches este mês": só os criados a partir do dia 1 do mês atual (usa Match.criado_em)
+    const hoje = new Date();
+    const inicioDoMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString();
+    const matches = await apiFetch(`/matches?empresaId=${sessao.usuario.id}&desde=${encodeURIComponent(inicioDoMes)}`);
     document.getElementById("statMatches").textContent = matches.length;
   } catch (_) {}
 
@@ -685,7 +688,7 @@ async function decidirEmpresa(gostou) {
     try {
       const resposta = await apiFetch("/likes", {
         method: "POST",
-        body: JSON.stringify({ tipo: "empresa_para_estudante", estudanteId: cand.id, vagaId: vaga.id }),
+        body: JSON.stringify({ origem: "empresa", empresaId: sessao.usuario.id, estudanteId: cand.id, vagaId: vaga.id }),
       });
       if (resposta.houveMatch) {
         mostrarMatch(
@@ -862,7 +865,7 @@ async function renderizarChat() {
   }
 
   corpo.innerHTML = mensagens.map((m) => {
-    const doLadoDeQuemEstaVendo = m.de === sessao.tipo ? "eu" : "outro";
+    const doLadoDeQuemEstaVendo = m.enviadoPor === sessao.tipo ? "eu" : "outro";
     return `<div class="bolha ${doLadoDeQuemEstaVendo}">${escaparHtml(m.texto)}<span class="hora">${formatarHora(m.criadoEm)}</span></div>`;
   }).join("");
   corpo.scrollTop = corpo.scrollHeight;
@@ -887,7 +890,7 @@ async function enviarMensagem() {
   try {
     await apiFetch("/mensagens", {
       method: "POST",
-      body: JSON.stringify({ matchId: estado.conversaAtual, de: sessao.tipo, texto }),
+      body: JSON.stringify({ matchId: estado.conversaAtual, enviadoPor: sessao.tipo, texto }),
     });
     await renderizarChat();
   } catch (erro) {

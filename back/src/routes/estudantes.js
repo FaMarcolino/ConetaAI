@@ -4,7 +4,12 @@ const estudantes = require("../repositorio/estudantes");
 const cursos = require("../repositorio/cursos");
 const tecnologias = require("../repositorio/tecnologias");
 const assincrono = require("../assincrono");
-const { MODALIDADES, textoPreenchido, emailValido, paraLista, semSenha } = require("../validacao");
+const {
+  MODALIDADES, textoPreenchido, emailValido, paraLista, semSenha,
+  previsaoConclusaoValida, normalizarAreasInteresse,
+} = require("../validacao");
+
+const ERRO_PREVISAO = "Previsão de conclusão inválida. Use o formato AAAA-MM (ex.: 2027-12).";
 
 const router = express.Router();
 
@@ -27,7 +32,10 @@ async function resolverCursoEHabilidades(curso, habilidades) {
 
 // POST /api/estudantes - cadastro de um novo estudante
 router.post("/", assincrono(async (req, res) => {
-  const { nome, email, senha, curso, cidade, modalidade, disponibilidadeMeses, habilidades } = req.body;
+  const {
+    nome, email, senha, curso, cidade, modalidade, disponibilidadeMeses, habilidades,
+    areasInteresse, previsaoConclusao,
+  } = req.body;
 
   if (![nome, email, senha, curso, cidade, modalidade].every(textoPreenchido)) {
     return res.status(400).json({ erro: "Preencha nome, e-mail, senha, curso, cidade e modalidade." });
@@ -38,6 +46,15 @@ router.post("/", assincrono(async (req, res) => {
   const meses = Number(disponibilidadeMeses);
   if (!Number.isInteger(meses) || meses < 1) {
     return res.status(400).json({ erro: "Informe a disponibilidade em meses (número inteiro, mínimo 1)." });
+  }
+  if (previsaoConclusao !== undefined && !previsaoConclusaoValida(previsaoConclusao)) {
+    return res.status(400).json({ erro: ERRO_PREVISAO });
+  }
+  let areas = [];
+  if (areasInteresse !== undefined) {
+    const resultadoAreas = normalizarAreasInteresse(areasInteresse);
+    if (resultadoAreas.erro) return res.status(400).json({ erro: resultadoAreas.erro });
+    areas = resultadoAreas.areas;
   }
   if (await estudantes.buscarPorEmail(email)) {
     return res.status(409).json({ erro: "Já existe um estudante cadastrado com esse e-mail." });
@@ -52,9 +69,11 @@ router.post("/", assincrono(async (req, res) => {
     senha,
     curso: catalogo.curso,
     habilidades: catalogo.habilidades,
+    areasInteresse: areas,
     cidade: cidade.trim(),
     modalidade,
     disponibilidadeMeses: meses,
+    previsaoConclusao,
   });
   res.status(201).json(semSenha(novo));
 }));
@@ -81,6 +100,14 @@ router.put("/:id", assincrono(async (req, res) => {
 
   if (alteracoes.modalidade !== undefined && !MODALIDADES.includes(alteracoes.modalidade)) {
     return res.status(400).json({ erro: "Modalidade inválida." });
+  }
+  if (alteracoes.previsaoConclusao !== undefined && !previsaoConclusaoValida(alteracoes.previsaoConclusao)) {
+    return res.status(400).json({ erro: ERRO_PREVISAO });
+  }
+  if (alteracoes.areasInteresse !== undefined) {
+    const resultadoAreas = normalizarAreasInteresse(alteracoes.areasInteresse);
+    if (resultadoAreas.erro) return res.status(400).json({ erro: resultadoAreas.erro });
+    alteracoes.areasInteresse = resultadoAreas.areas;
   }
 
   const catalogo = await resolverCursoEHabilidades(req.body.curso, req.body.habilidades);

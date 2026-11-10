@@ -18,16 +18,18 @@ async function criar(estudanteId, vagaId) {
   return match;
 }
 
-// filtros opcionais: estudanteId, vagaId, empresaId (todas as vagas da empresa).
+// filtros opcionais: estudanteId, vagaId, empresaId (todas as vagas da empresa),
+// desde (objeto Date: só matches criados a partir dessa data, usando criadoEm).
 // Já devolve os dados resumidos de vaga e estudante (no SQL será um JOIN).
 async function listarDetalhado(filtros = {}) {
-  const { estudanteId, vagaId, empresaId } = filtros;
+  const { estudanteId, vagaId, empresaId, desde } = filtros;
   const idsVagasDaEmpresa = empresaId ? vagas.filter((v) => v.empresaId === empresaId).map((v) => v.id) : null;
 
   return matches
     .filter((m) => !estudanteId || m.estudanteId === estudanteId)
     .filter((m) => !vagaId || m.vagaId === vagaId)
     .filter((m) => !idsVagasDaEmpresa || idsVagasDaEmpresa.includes(m.vagaId))
+    .filter((m) => !desde || new Date(m.criadoEm) >= desde)
     .map((m) => {
       const vagaBruta = vagas.find((v) => v.id === m.vagaId);
       const vaga = vagaBruta ? comEmpresa(vagaBruta) : null;

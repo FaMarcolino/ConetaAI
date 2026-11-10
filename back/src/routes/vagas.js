@@ -32,7 +32,7 @@ router.get("/", assincrono(async (req, res) => {
 
   let idsCurtidos = new Set();
   if (estudante) {
-    const curtidas = await likes.listar({ tipo: "estudante_para_vaga", estudanteId: estudante.id });
+    const curtidas = await likes.listar({ origem: "estudante", estudanteId: estudante.id });
     idsCurtidos = new Set(curtidas.map((l) => l.vagaId));
   }
   if (feed === "1") lista = lista.filter((v) => !idsCurtidos.has(v.id));
@@ -134,7 +134,7 @@ router.get("/:id/candidatos", assincrono(async (req, res) => {
 
   let idsCurtidos = new Set();
   if (req.query.ocultarCurtidos === "1") {
-    const curtidas = await likes.listar({ tipo: "empresa_para_estudante", vagaId: vaga.id });
+    const curtidas = await likes.listar({ origem: "empresa", vagaId: vaga.id });
     idsCurtidos = new Set(curtidas.map((l) => l.estudanteId));
   }
 

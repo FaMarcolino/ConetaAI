@@ -150,14 +150,14 @@ const vagas = [
   },
 ];
 
-// likes: registra cada curtida individual, de um lado só
-const likes = []; // { id, tipo: 'estudante_para_vaga' | 'empresa_para_estudante', estudanteId, vagaId, criadoEm }
+// likes (entidade Curtida do ER): registra cada curtida individual, de um lado só
+const likes = []; // { id, origem: 'estudante' | 'empresa', estudanteId, vagaId, criadoEm }
 
 // matches: só existe quando os DOIS lados curtiram
 const matches = []; // { id, estudanteId, vagaId, criadoEm }
 
 // mensagens: histórico de chat de cada match
-const mensagens = []; // { id, matchId, de: 'estudante' | 'empresa', texto, criadoEm }
+const mensagens = []; // { id, matchId, enviadoPor: 'estudante' | 'empresa', texto, criadoEm }
 
 module.exports = {
   cursos,

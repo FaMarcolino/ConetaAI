@@ -3,6 +3,8 @@
 
 const MODALIDADES = ["presencial", "remoto", "hibrido"];
 const STATUS_VAGA = ["Ativa", "Encerrada"];
+// Os dois lados da plataforma. Usado em Curtida.origem e Mensagem.enviadoPor.
+const LADOS = ["estudante", "empresa"];
 
 function textoPreenchido(valor) {
   return typeof valor === "string" && valor.trim().length > 0;
@@ -29,4 +31,36 @@ function semSenha(usuario) {
   return resto;
 }
 
-module.exports = { MODALIDADES, STATUS_VAGA, textoPreenchido, emailValido, paraLista, normalizar, semSenha };
+// previsaoConclusao: texto vazio (sem previsão) ou ano-mês no formato AAAA-MM
+function previsaoConclusaoValida(valor) {
+  return typeof valor === "string" && (valor === "" || /^\d{4}-(0[1-9]|1[0-2])$/.test(valor));
+}
+
+// areasInteresse: lista de textos não vazios. Remove repetições (ignorando maiúsculas e acentos).
+// Devolve { areas } ou { erro }.
+function normalizarAreasInteresse(valor) {
+  if (!Array.isArray(valor)) return { erro: "areasInteresse precisa ser uma lista de textos." };
+  const areas = [];
+  for (const item of valor) {
+    if (typeof item !== "string" || !item.trim()) {
+      return { erro: "areasInteresse não pode ter itens vazios nem que não sejam texto." };
+    }
+    const area = item.trim();
+    if (area.length > 60) return { erro: "Cada área de interesse pode ter no máximo 60 caracteres." };
+    if (!areas.some((a) => normalizar(a) === normalizar(area))) areas.push(area);
+  }
+  return { areas };
+}
+
+module.exports = {
+  MODALIDADES,
+  STATUS_VAGA,
+  LADOS,
+  textoPreenchido,
+  emailValido,
+  paraLista,
+  normalizar,
+  semSenha,
+  previsaoConclusaoValida,
+  normalizarAreasInteresse,
+};

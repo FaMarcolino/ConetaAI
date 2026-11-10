@@ -49,9 +49,13 @@ Também é possível criar contas novas pela tela de cadastro.
 Cursos e tecnologias **não são texto livre**: o backend recusa nomes fora dessas listas (ignorando maiúsculas e acentos) e guarda sempre o nome oficial.
 
 ### Estudante
-- `POST /api/estudantes` — cadastro: `{ nome, email, senha, curso, cidade, modalidade, disponibilidadeMeses, habilidades? }` (e-mail único, senha com 6+ caracteres)
+- `POST /api/estudantes` — cadastro: `{ nome, email, senha, curso, cidade, modalidade, disponibilidadeMeses, habilidades?, areasInteresse?, previsaoConclusao? }` (e-mail único, senha com 6+ caracteres)
 - `GET /api/estudantes/:id`
 - `PUT /api/estudantes/:id` — atualiza o perfil
+
+Validações do perfil:
+- `areasInteresse` (atributo multivalorado do ER): lista de textos não vazios, com até 60 caracteres. Repetições são removidas (ignorando maiúsculas e acentos).
+- `previsaoConclusao`: texto vazio ou ano-mês no formato `AAAA-MM` (ex.: `2027-12`).
 
 ### Empresa
 - `POST /api/empresas` — cadastro: `{ nome, email, senha, setor, cidade }` (e-mail único)
@@ -73,14 +77,18 @@ Cursos e tecnologias **não são texto livre**: o backend recusa nomes fora dess
 Alterar status ou excluir só é permitido para a empresa dona da vaga (`403` caso contrário).
 
 ### Curtidas e matches
-- `POST /api/likes` — `{ tipo: "estudante_para_vaga" | "empresa_para_estudante", estudanteId, vagaId }`. Se os dois lados já curtiram, o match é criado na hora (`houveMatch: true`). Vagas encerradas não aceitam curtidas.
+- `POST /api/likes` — `{ origem: "estudante" | "empresa", estudanteId, vagaId, empresaId }`
+  - `origem: "estudante"`: o estudante curtiu a vaga.
+  - `origem: "empresa"`: a empresa curtiu o estudante **para aquela vaga**. Aqui o `empresaId` é obrigatório e precisa ser o da empresa dona da vaga (`403` caso contrário).
+  - Se os dois lados já curtiram, o match é criado na hora (`houveMatch: true`). Vagas encerradas não aceitam curtidas. Curtir duas vezes não duplica.
 - `GET /api/matches?estudanteId=est_1` — matches de um estudante
 - `GET /api/matches?vagaId=v1` — matches de uma vaga
 - `GET /api/matches?empresaId=emp_1` — matches de todas as vagas da empresa
+- `GET /api/matches?...&desde=2026-11-01T00:00:00.000Z` — só os matches criados a partir da data (é o que o painel da empresa usa para "Matches este mês")
 
 ### Chat
 - `GET /api/mensagens/:matchId` — histórico de mensagens de um match
-- `POST /api/mensagens` — `{ matchId, de: "estudante" | "empresa", texto }`
+- `POST /api/mensagens` — `{ matchId, enviadoPor: "estudante" | "empresa", texto }` (`enviadoPor` fora desses dois valores retorna `400`)
 
 ## Exemplo de fluxo completo (curl)
 
@@ -88,17 +96,17 @@ Alterar status ou excluir só é permitido para a empresa dona da vaga (`403` ca
 # 1. estudante curte a vaga
 curl -X POST http://localhost:3000/api/likes \
   -H "Content-Type: application/json" \
-  -d '{"tipo":"estudante_para_vaga","estudanteId":"est_1","vagaId":"v1"}'
+  -d '{"origem":"estudante","estudanteId":"est_1","vagaId":"v1"}'
 
-# 2. empresa curte o mesmo estudante para a mesma vaga -> dá match
+# 2. a empresa dona da vaga (emp_1) curte o mesmo estudante para a mesma vaga -> dá match
 curl -X POST http://localhost:3000/api/likes \
   -H "Content-Type: application/json" \
-  -d '{"tipo":"empresa_para_estudante","estudanteId":"est_1","vagaId":"v1"}'
+  -d '{"origem":"empresa","empresaId":"emp_1","estudanteId":"est_1","vagaId":"v1"}'
 
 # 3. enviar mensagem no match criado (troque MATCH_ID pelo id retornado acima)
 curl -X POST http://localhost:3000/api/mensagens \
   -H "Content-Type: application/json" \
-  -d '{"matchId":"MATCH_ID","de":"estudante","texto":"Olá! Vamos conversar sobre a vaga?"}'
+  -d '{"matchId":"MATCH_ID","enviadoPor":"estudante","texto":"Olá! Vamos conversar sobre a vaga?"}'
 ```
 
 ## Próximos passos
