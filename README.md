@@ -2,8 +2,6 @@
 
 **Sistema para conectar estudantes e empresas em vagas de estágio por meio de "match".**
 
-Projeto de Implementação da disciplina **CSI602 – Banco de Dados I**
-Universidade Federal de Ouro Preto · Instituto de Ciências Exatas e Aplicadas · Departamento de Computação e Sistemas
 
 ## Sobre o projeto
 
@@ -37,7 +35,7 @@ O sistema calcula um **score de compatibilidade** entre cada estudante e cada va
 
 Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 
-**Ferramenta:** [PREENCHER: nome da ferramenta usada para desenhar o diagrama]
+**Ferramenta:** Miro
 **Notação:** estilo Peter Chen, com atributos como círculos (círculo preenchido = chave) e cardinalidade `(mín,máx)` em cada ligação.
 
 **Como ler as cardinalidades:** o par escrito ao lado de uma entidade diz quantas daquelas entidades se relacionam com **uma** instância da outra. Exemplo: em `publica`, o `(1,1)` ao lado de Empresa significa que cada vaga tem exatamente 1 empresa, e o `(0,n)` ao lado de Vaga significa que uma empresa tem de 0 a n vagas.
