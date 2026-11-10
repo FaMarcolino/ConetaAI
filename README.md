@@ -70,6 +70,105 @@ Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 
 A entidade **Curtida** existe porque há dois sentidos de curtida (estudante → vaga e empresa → estudante, para uma vaga), e o mesmo par (estudante, vaga) pode ter uma de cada. O atributo `origem` diz de qual lado ela veio. Na ligação com o Estudante, ele é o autor quando `origem = estudante` e o alvo quando `origem = empresa`.
 
+## Modelo lógico (mapeamento ER → relacional)
+
+Mapeamento feito com o algoritmo ER → relacional visto na disciplina (Elmasri & Navathe, cap. 9), a partir do diagrama acima.
+
+| Passo do algoritmo | O que se aplica ao ConetaAI | Resultado |
+|--------------------|-----------------------------|-----------|
+| 1. Entidades regulares | Empresa, Estudante, Vaga, Curso, Tecnologia, Curtida, Match, Mensagem | 8 relações |
+| 2. Entidades fracas | Nenhuma (todas têm `id` próprio) | – |
+| 3. Relacionamentos 1:1 | Nenhum | – |
+| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem` e os dois `curte`: chave estrangeira na relação do lado N | chaves estrangeiras |
+| 5. Relacionamentos M:N | `aceita`, `requer`, `possui`: uma nova relação para cada | 3 relações |
+| 6. Atributo multivalorado | `areas_interesse`: uma nova relação | 1 relação |
+| 7 a 10. N-ários, especialização, categoria, associativa | Não existem no ER | – |
+
+Total: **12 relações**.
+
+**Legenda:** `#` marca a chave primária. `referencia` indica a chave estrangeira. Os `id` são inteiros gerados automaticamente. Os atributos que aceitam `NULL` estão marcados com `?`; todos os demais são obrigatórios.
+
+```
+EMPRESA (#id, nome, email, senha, setor, cidade, descricao?, site?)
+  UNIQUE (email)
+
+ESTUDANTE (#id, nome, email, senha, cidade, modalidade, disponibilidade_meses,
+           previsao_conclusao?, curso_id)
+  UNIQUE (email)
+  curso_id referencia CURSO (id)
+
+VAGA (#id, cargo, modalidade, cidade?, faixa_salarial?, periodo_minimo_meses,
+      status, empresa_id)
+  empresa_id referencia EMPRESA (id)
+
+CURSO (#id, nome)
+  UNIQUE (nome)
+
+TECNOLOGIA (#id, nome)
+  UNIQUE (nome)
+
+CURTIDA (#id, origem, criado_em, estudante_id, vaga_id)
+  estudante_id referencia ESTUDANTE (id)
+  vaga_id referencia VAGA (id)
+  UNIQUE (estudante_id, vaga_id, origem)
+
+MATCH (#id, criado_em, estudante_id, vaga_id)
+  estudante_id referencia ESTUDANTE (id)
+  vaga_id referencia VAGA (id)
+  UNIQUE (vaga_id, estudante_id)
+
+MENSAGEM (#id, texto, enviado_por, criado_em, match_id)
+  match_id referencia MATCH (id)
+
+VAGA_CURSO (#vaga_id, #curso_id)                          -- relacionamento aceita
+  vaga_id referencia VAGA (id)
+  curso_id referencia CURSO (id)
+
+VAGA_TECNOLOGIA (#vaga_id, #tecnologia_id)                -- relacionamento requer
+  vaga_id referencia VAGA (id)
+  tecnologia_id referencia TECNOLOGIA (id)
+
+ESTUDANTE_TECNOLOGIA (#estudante_id, #tecnologia_id)      -- relacionamento possui
+  estudante_id referencia ESTUDANTE (id)
+  tecnologia_id referencia TECNOLOGIA (id)
+
+ESTUDANTE_AREA_INTERESSE (#estudante_id, #area)           -- atributo multivalorado
+  estudante_id referencia ESTUDANTE (id)
+```
+
+### Chaves candidatas
+Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e de estudante, o `nome` de curso e de tecnologia, o par `(vaga_id, estudante_id)` do match e o trio `(estudante_id, vaga_id, origem)` da curtida.
+
+### Restrições de domínio (`CHECK`)
+
+| Atributo | Valores permitidos |
+|----------|--------------------|
+| `modalidade` (Estudante e Vaga) | `presencial`, `remoto`, `hibrido` |
+| `status` (Vaga) | `Ativa`, `Encerrada` |
+| `origem` (Curtida) | `estudante`, `empresa` |
+| `enviado_por` (Mensagem) | `estudante`, `empresa` |
+| `disponibilidade_meses`, `periodo_minimo_meses` | inteiro maior ou igual a 1 |
+| `previsao_conclusao` | vazio ou `AAAA-MM` |
+
+### Ações referenciais (o que acontece ao excluir)
+
+| Ao excluir | Efeito |
+|------------|--------|
+| Empresa | exclui as vagas dela (e, por consequência, tudo que depende delas) |
+| Vaga | exclui suas curtidas, matches, mensagens e as ligações em `VAGA_CURSO` e `VAGA_TECNOLOGIA` |
+| Estudante | exclui suas curtidas, matches, mensagens e as ligações em `ESTUDANTE_TECNOLOGIA` e `ESTUDANTE_AREA_INTERESSE` |
+| Match | exclui as mensagens dele |
+| Curso ou Tecnologia | **bloqueado** enquanto houver vaga ou estudante usando |
+
+### Regras que ficam na aplicação
+O modelo relacional não consegue expressar estas regras apenas com chaves e restrições:
+- O match só é criado quando existem as duas curtidas (uma de cada origem) para o mesmo par (estudante, vaga).
+- Vaga encerrada não recebe curtidas.
+- Toda vaga aceita **ao menos um** curso (participação `(1,n)` de `aceita`). A chave estrangeira sozinha permitiria uma vaga sem curso.
+- Só a empresa dona da vaga pode curtir candidatos dela, encerrá-la ou excluí-la.
+
+> **Observação para o SQL:** `MATCH` é palavra reservada em alguns SGBDs (por exemplo, MySQL). No script de criação da Etapa 4 a tabela pode precisar de aspas ou de outro nome.
+
 ## Tecnologias
 
 | Camada | Tecnologia |
@@ -119,7 +218,7 @@ Também é possível criar contas novas pela tela de cadastro.
 
 - [x] Etapa 1: definição do problema
 - [x] Etapa 2: diagrama entidade-relacionamento
-- [ ] Etapa 3: modelo lógico (mapeamento ER → relacional)
+- [x] Etapa 3: modelo lógico (mapeamento ER → relacional)
 - [ ] Etapa 4: scripts SQL de criação e povoamento
 - [ ] Integração da API com o SGBD (hoje os dados ficam em memória e reiniciam com o servidor)
 - [ ] Etapa 5: vídeo de apresentação (até 10 min)
