@@ -5,13 +5,6 @@
 Projeto de Implementação da disciplina **CSI602 – Banco de Dados I**
 Universidade Federal de Ouro Preto · Instituto de Ciências Exatas e Aplicadas · Departamento de Computação e Sistemas
 
-## Desenvolvimento
-
-| Nome completo | Matrícula |
-|---------------|-----------|
-| [PREENCHER] | [PREENCHER] |
-| [PREENCHER] | [PREENCHER] |
-
 ## Sobre o projeto
 
 O ConetaAI funciona como um "match" entre estudantes e vagas de estágio. A empresa publica vagas informando os cursos aceitos, as tecnologias exigidas, a modalidade, a cidade e o período mínimo. O estudante cria um perfil com curso, habilidades, cidade, modalidade preferida e disponibilidade.
