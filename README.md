@@ -86,55 +86,51 @@ Mapeamento feito com o algoritmo ER → relacional, a partir do diagrama acima.
 
 Total: **12 relações**.
 
-**Legenda:** `#` marca a chave primária. `referencia` indica a chave estrangeira. Os `id` são inteiros gerados automaticamente. Os atributos que aceitam `NULL` estão marcados com `?`; todos os demais são obrigatórios.
+**Legenda:** o atributo <u>sublinhado</u> é a chave primária (em chave composta, todos os sublinhados juntos formam a chave). `referencia` indica a chave estrangeira. Os `id` são inteiros gerados automaticamente. Os atributos que aceitam `NULL` estão marcados com `?`; todos os demais são obrigatórios.
 
-```
-EMPRESA (#id, nome, email, senha, setor, cidade, descricao?, site?)
-  UNIQUE (email)
+**EMPRESA** (<u>id</u>, nome, email, senha, setor, cidade, descricao?, site?)
+- UNIQUE (email)
 
-ESTUDANTE (#id, nome, email, senha, cidade, modalidade, disponibilidade_meses,
-           previsao_conclusao?, curso_id)
-  UNIQUE (email)
-  curso_id referencia CURSO (id)
+**ESTUDANTE** (<u>id</u>, nome, email, senha, cidade, modalidade, disponibilidade_meses, previsao_conclusao?, curso_id)
+- UNIQUE (email)
+- curso_id referencia CURSO (id)
 
-VAGA (#id, cargo, modalidade, cidade?, faixa_salarial?, periodo_minimo_meses,
-      status, empresa_id)
-  empresa_id referencia EMPRESA (id)
+**VAGA** (<u>id</u>, cargo, modalidade, cidade?, faixa_salarial?, periodo_minimo_meses, status, empresa_id)
+- empresa_id referencia EMPRESA (id)
 
-CURSO (#id, nome)
-  UNIQUE (nome)
+**CURSO** (<u>id</u>, nome)
+- UNIQUE (nome)
 
-TECNOLOGIA (#id, nome)
-  UNIQUE (nome)
+**TECNOLOGIA** (<u>id</u>, nome)
+- UNIQUE (nome)
 
-CURTIDA (#id, origem, criado_em, estudante_id, vaga_id)
-  estudante_id referencia ESTUDANTE (id)
-  vaga_id referencia VAGA (id)
-  UNIQUE (estudante_id, vaga_id, origem)
+**CURTIDA** (<u>id</u>, origem, criado_em, estudante_id, vaga_id)
+- estudante_id referencia ESTUDANTE (id)
+- vaga_id referencia VAGA (id)
+- UNIQUE (estudante_id, vaga_id, origem)
 
-MATCH (#id, criado_em, estudante_id, vaga_id)
-  estudante_id referencia ESTUDANTE (id)
-  vaga_id referencia VAGA (id)
-  UNIQUE (vaga_id, estudante_id)
+**MATCH** (<u>id</u>, criado_em, estudante_id, vaga_id)
+- estudante_id referencia ESTUDANTE (id)
+- vaga_id referencia VAGA (id)
+- UNIQUE (vaga_id, estudante_id)
 
-MENSAGEM (#id, texto, enviado_por, criado_em, match_id)
-  match_id referencia MATCH (id)
+**MENSAGEM** (<u>id</u>, texto, enviado_por, criado_em, match_id)
+- match_id referencia MATCH (id)
 
-VAGA_CURSO (#vaga_id, #curso_id)                          -- relacionamento aceita
-  vaga_id referencia VAGA (id)
-  curso_id referencia CURSO (id)
+**VAGA_CURSO** (<u>vaga_id</u>, <u>curso_id</u>) *(relacionamento aceita)*
+- vaga_id referencia VAGA (id)
+- curso_id referencia CURSO (id)
 
-VAGA_TECNOLOGIA (#vaga_id, #tecnologia_id)                -- relacionamento requer
-  vaga_id referencia VAGA (id)
-  tecnologia_id referencia TECNOLOGIA (id)
+**VAGA_TECNOLOGIA** (<u>vaga_id</u>, <u>tecnologia_id</u>) *(relacionamento requer)*
+- vaga_id referencia VAGA (id)
+- tecnologia_id referencia TECNOLOGIA (id)
 
-ESTUDANTE_TECNOLOGIA (#estudante_id, #tecnologia_id)      -- relacionamento possui
-  estudante_id referencia ESTUDANTE (id)
-  tecnologia_id referencia TECNOLOGIA (id)
+**ESTUDANTE_TECNOLOGIA** (<u>estudante_id</u>, <u>tecnologia_id</u>) *(relacionamento possui)*
+- estudante_id referencia ESTUDANTE (id)
+- tecnologia_id referencia TECNOLOGIA (id)
 
-ESTUDANTE_AREA_INTERESSE (#estudante_id, #area)           -- atributo multivalorado
-  estudante_id referencia ESTUDANTE (id)
-```
+**ESTUDANTE_AREA_INTERESSE** (<u>estudante_id</u>, <u>area</u>) *(atributo multivalorado areas_interesse)*
+- estudante_id referencia ESTUDANTE (id)
 
 ### Chaves candidatas
 Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e de estudante, o `nome` de curso e de tecnologia, o par `(vaga_id, estudante_id)` do match e o trio `(estudante_id, vaga_id, origem)` da curtida.
