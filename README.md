@@ -320,12 +320,3 @@ set SEGREDO_TOKEN=um-texto-longo-e-aleatorio
 ```
 
 **Limitações conhecidas (é um protótipo):** não há limite de tentativas de login, a comunicação é HTTP e não HTTPS, o token fica só na memória da página (recarregar a página pede o login de novo) e o servidor não "revoga" tokens antes de vencerem.
-
-## Andamento
-
-- [x] Etapa 1: definição do problema
-- [x] Etapa 2: diagrama entidade-relacionamento
-- [x] Etapa 3: modelo lógico (mapeamento ER → relacional)
-- [x] Etapa 4: scripts SQL de criação e povoamento
-- [x] Integração da API com o SGBD (PostgreSQL, com SQL escrito à mão)
-- [ ] Etapa 5: vídeo de apresentação (até 10 min)
