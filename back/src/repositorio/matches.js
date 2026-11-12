@@ -1,5 +1,5 @@
 // src/repositorio/matches.js
-const { matches, vagas, estudantes, gerarId } = require("../data");
+const { matches, vagas, estudantes, likes, gerarId } = require("../data");
 const { comEmpresa } = require("./vagas");
 
 async function buscarPorId(id) {
@@ -15,6 +15,13 @@ async function criar(estudanteId, vagaId) {
   if (existente) return existente;
   const match = { id: gerarId("match"), estudanteId, vagaId, criadoEm: new Date().toISOString() };
   matches.push(match);
+
+  // Relacionamento "origina": as curtidas do par passam a apontar para o match.
+  // No banco isso é feito por trigger (ver back/sql/01_schema.sql).
+  likes
+    .filter((l) => l.estudanteId === estudanteId && l.vagaId === vagaId)
+    .forEach((l) => { l.matchId = match.id; });
+
   return match;
 }
 

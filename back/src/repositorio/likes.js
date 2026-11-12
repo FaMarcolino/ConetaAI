@@ -1,5 +1,6 @@
 // src/repositorio/likes.js
-// Entidade Curtida do ER: { id, origem, estudanteId, vagaId, criadoEm }
+// Entidade Curtida do ER: { id, origem, estudanteId, vagaId, criadoEm, matchId }
+// matchId fica null até as duas curtidas do par formarem um match (relacionamento "origina").
 // origem = 'estudante' (estudante curtiu a vaga) ou 'empresa' (empresa curtiu o estudante para a vaga).
 const { likes, gerarId } = require("../data");
 
@@ -19,7 +20,7 @@ async function existe(origem, estudanteId, vagaId) {
 // idempotente: curtir duas vezes não cria duas linhas (no SQL: UNIQUE (estudante_id, vaga_id, origem))
 async function criar(origem, estudanteId, vagaId) {
   if (await existe(origem, estudanteId, vagaId)) return null;
-  const like = { id: gerarId("like"), origem, estudanteId, vagaId, criadoEm: new Date().toISOString() };
+  const like = { id: gerarId("like"), origem, estudanteId, vagaId, criadoEm: new Date().toISOString(), matchId: null };
   likes.push(like);
   return like;
 }

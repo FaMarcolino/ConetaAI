@@ -31,7 +31,7 @@ O sistema calcula um **score de compatibilidade** entre cada estudante e cada va
 
 ## Modelo conceitual (diagrama ER)
 
-![Diagrama ER do ConetaAI](docs/modelo-er.png)
+![Diagrama ER do ConetaAI](docs/modelo-er.jpg)
 
 Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 
@@ -67,8 +67,11 @@ Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 | gera | Vaga – Match | Vaga (1,1) · Match (0,n) |
 | participa | Estudante – Match | Estudante (1,1) · Match (0,n) |
 | contem | Match – Mensagem | Match (1,1) · Mensagem (0,n) |
+| origina | Match – Curtida | Match (0,1) · Curtida (1,n) |
 
 A entidade **Curtida** existe porque há dois sentidos de curtida (estudante → vaga e empresa → estudante, para uma vaga), e o mesmo par (estudante, vaga) pode ter uma de cada. O atributo `origem` diz de qual lado ela veio. Na ligação com o Estudante, ele é o autor quando `origem = estudante` e o alvo quando `origem = empresa`.
+
+O relacionamento **origina** liga o Match às curtidas que o formaram: um match é originado por exatamente 2 curtidas, **uma de origem `estudante` e uma de origem `empresa`**, ambas do mesmo par (estudante, vaga). A cardinalidade fica `(1,n)` porque a notação só usa `0`, `1` e `n`; o "exatamente 2, uma de cada origem" é uma regra garantida no banco (veja abaixo).
 
 ## Modelo lógico (mapeamento ER → relacional)
 
@@ -79,7 +82,7 @@ Mapeamento feito com o algoritmo ER → relacional, a partir do diagrama acima.
 | 1. Entidades regulares | Empresa, Estudante, Vaga, Curso, Tecnologia, Curtida, Match, Mensagem | 8 relações |
 | 2. Entidades fracas | Nenhuma (todas têm `id` próprio) | – |
 | 3. Relacionamentos 1:1 | Nenhum | – |
-| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem` e os dois `curte`: chave estrangeira na relação do lado N | chaves estrangeiras |
+| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem`, `origina` e os dois `curte`: chave estrangeira na relação do lado N | chaves estrangeiras |
 | 5. Relacionamentos M:N | `aceita`, `requer`, `possui`: uma nova relação para cada | 3 relações |
 | 6. Atributo multivalorado | `areas_interesse`: uma nova relação | 1 relação |
 | 7 a 10. N-ários, especialização, categoria, associativa | Não existem no ER | – |
@@ -107,10 +110,12 @@ CURSO (#id, nome)
 TECNOLOGIA (#id, nome)
   UNIQUE (nome)
 
-CURTIDA (#id, origem, criado_em, estudante_id, vaga_id)
+CURTIDA (#id, origem, criado_em, estudante_id, vaga_id, match_id?)
   estudante_id referencia ESTUDANTE (id)
   vaga_id referencia VAGA (id)
+  match_id referencia MATCH (id)
   UNIQUE (estudante_id, vaga_id, origem)
+  UNIQUE (match_id, origem)
 
 MATCH (#id, criado_em, estudante_id, vaga_id)
   estudante_id referencia ESTUDANTE (id)
@@ -137,7 +142,7 @@ ESTUDANTE_AREA_INTERESSE (#estudante_id, #area)           -- atributo multivalor
 ```
 
 ### Chaves candidatas
-Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e de estudante, o `nome` de curso e de tecnologia, o par `(vaga_id, estudante_id)` do match e o trio `(estudante_id, vaga_id, origem)` da curtida.
+Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e de estudante, o `nome` de curso e de tecnologia, o par `(vaga_id, estudante_id)` do match, o trio `(estudante_id, vaga_id, origem)` da curtida e o par `(match_id, origem)` da curtida (no máximo uma curtida de cada origem por match).
 
 ### Restrições de domínio (`CHECK`)
 
@@ -157,13 +162,13 @@ Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e 
 | Empresa | exclui as vagas dela (e, por consequência, tudo que depende delas) |
 | Vaga | exclui suas curtidas, matches, mensagens e as ligações em `VAGA_CURSO` e `VAGA_TECNOLOGIA` |
 | Estudante | exclui suas curtidas, matches, mensagens e as ligações em `ESTUDANTE_TECNOLOGIA` e `ESTUDANTE_AREA_INTERESSE` |
-| Match | exclui as mensagens dele |
+| Match | exclui as mensagens dele; as curtidas permanecem, com `match_id` vazio |
 | Curso ou Tecnologia | **bloqueado** enquanto houver vaga ou estudante usando |
 
-### Regras que ficam na aplicação
-O modelo relacional não consegue expressar estas regras apenas com chaves e restrições:
-- O match só é criado quando existem as duas curtidas (uma de cada origem) para o mesmo par (estudante, vaga).
-- Vaga encerrada não recebe curtidas.
+### Regras que não cabem só em chaves e restrições
+O modelo relacional não consegue expressar estas regras apenas com chaves e `CHECK`:
+- **Garantida no banco por triggers:** o match só existe quando há uma curtida de cada origem (`estudante` e `empresa`) para o mesmo par (estudante, vaga). Ao criar o match, as duas curtidas são ligadas a ele (`match_id`), e uma curtida só pode apontar para o match do seu próprio par. A aplicação também confere antes de criar.
+- **Na aplicação:** vaga encerrada não recebe curtidas.
 - Toda vaga aceita **ao menos um** curso (participação `(1,n)` de `aceita`). A chave estrangeira sozinha permitiria uma vaga sem curso.
 - Só a empresa dona da vaga pode curtir candidatos dela, encerrá-la ou excluí-la.
 
@@ -174,7 +179,7 @@ O modelo relacional não consegue expressar estas regras apenas com chaves e res
 |--------|------------|
 | Interface | HTML, CSS e JavaScript puro |
 | Servidor | Node.js + Express |
-| Banco de dados | [PREENCHER: SGBD relacional escolhido], acessado com SQL escrito à mão (sem ORM) |
+| Banco de dados | PostgreSQL 18, acessado com SQL escrito à mão (sem ORM) |
 
 ## Estrutura do repositório
 
@@ -183,6 +188,7 @@ back/     API (Node.js + Express)
   src/routes/       rotas HTTP
   src/repositorio/  acesso aos dados (será reescrito com SQL)
   src/data.js       armazenamento em memória (provisório)
+  sql/              scripts SQL: esquema, dados e consultas de exemplo
 front/    interface web
 docs/     diagrama ER e demais documentos
 ```
@@ -202,6 +208,32 @@ npx serve
 
 Detalhes de cada parte: [back/README.md](back/README.md) e [front/README.md](front/README.md).
 
+## Banco de dados (PostgreSQL)
+
+Os scripts ficam em [back/sql/](back/sql/):
+
+| Arquivo | O que faz |
+|---------|-----------|
+| `01_schema.sql` | Cria as 12 tabelas do modelo lógico, com chaves, `UNIQUE`, `CHECK` e `ON DELETE`, e 3 triggers que garantem a regra do match. Pode ser executado de novo: apaga e recria tudo. |
+| `02_seed.sql` | Povoa o banco com os dados de demonstração (2 empresas, 4 estudantes, 3 vagas, 13 cursos e 19 tecnologias). |
+| `03_consultas_exemplo.sql` | Cinco consultas de exemplo (junções, agregações e subconsultas) para conferir o banco. |
+
+Para criar o banco e executar os scripts, no `cmd`, a partir da pasta raiz do repositório:
+
+```cmd
+chcp 65001
+set PATH=%PATH%;C:\Program Files\PostgreSQL\18\bin
+
+psql -U postgres -c "CREATE DATABASE conetaai WITH ENCODING 'UTF8' TEMPLATE template0;"
+psql -U postgres -d conetaai -v ON_ERROR_STOP=1 -f back\sql\01_schema.sql
+psql -U postgres -d conetaai -v ON_ERROR_STOP=1 -f back\sql\02_seed.sql
+psql -U postgres -d conetaai -f back\sql\03_consultas_exemplo.sql
+```
+
+O `psql` pede a senha do usuário `postgres` definida na instalação do PostgreSQL. O serviço do PostgreSQL precisa estar em execução.
+
+> Por enquanto a API ainda guarda os dados em memória. A ligação da API a este banco é o próximo passo do projeto.
+
 **Usuários de teste** (senha `123456`)
 
 | Tipo | E-mail |
@@ -218,6 +250,6 @@ Também é possível criar contas novas pela tela de cadastro.
 - [x] Etapa 1: definição do problema
 - [x] Etapa 2: diagrama entidade-relacionamento
 - [x] Etapa 3: modelo lógico (mapeamento ER → relacional)
-- [ ] Etapa 4: scripts SQL de criação e povoamento
+- [x] Etapa 4: scripts SQL de criação e povoamento
 - [ ] Integração da API com o SGBD (hoje os dados ficam em memória e reiniciam com o servidor)
 - [ ] Etapa 5: vídeo de apresentação (até 10 min)

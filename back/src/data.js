@@ -151,7 +151,7 @@ const vagas = [
 ];
 
 // likes (entidade Curtida do ER): registra cada curtida individual, de um lado só
-const likes = []; // { id, origem: 'estudante' | 'empresa', estudanteId, vagaId, criadoEm }
+const likes = []; // { id, origem: 'estudante' | 'empresa', estudanteId, vagaId, criadoEm, matchId }
 
 // matches: só existe quando os DOIS lados curtiram
 const matches = []; // { id, estudanteId, vagaId, criadoEm }
