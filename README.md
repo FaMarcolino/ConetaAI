@@ -211,7 +211,9 @@ set PGPASSWORD=sua-senha-do-postgres
 npm start
 ```
 
-A API sobe em `http://localhost:3000/api`. A senha é informada por variável de ambiente (nunca fica no código) e vale apenas na janela em que foi definida: se fechá-la, defina de novo.
+A API sobe em `http://localhost:3000/api`. A senha é informada por variável de ambiente (nunca fica no código) e vale apenas na janela em que foi definida: se fechá-la, defina de novo. Opcionalmente defina também `SEGREDO_TOKEN` (veja [Segurança](#segurança)).
+
+Ao iniciar, a API confere a conexão com o banco e mostra `Conectado ao PostgreSQL: banco "conetaai" ... (12 tabelas)`. Se o serviço estiver parado, a senha estiver errada ou o banco não existir, ela explica o que fazer.
 
 **2. Frontend.** Em outro terminal, sirva a pasta `front/`:
 
@@ -246,27 +248,7 @@ psql -U postgres -d conetaai -f back\sql\03_consultas_exemplo.sql
 
 O `psql` pede a senha do usuário `postgres` definida na instalação do PostgreSQL. O serviço do PostgreSQL precisa estar em execução.
 
-### Ligando a API ao banco
-
-Com o banco criado e povoado, suba a API informando a senha do `postgres` **por variável de ambiente** (a senha nunca fica no código):
-
-No **PowerShell**:
-
-```powershell
-cd back
-$env:PGPASSWORD = "sua-senha-do-postgres"
-npm start
-```
-
-No **cmd**:
-
-```cmd
-cd back
-set PGPASSWORD=sua-senha-do-postgres
-npm start
-```
-
-Opcionalmente defina também `SEGREDO_TOKEN` (veja [Segurança](#segurança)). Ao iniciar, a API confere a conexão e mostra `Conectado ao PostgreSQL: banco "conetaai" ... (12 tabelas)`. Se o serviço estiver parado, a senha estiver errada ou o banco não existir, ela explica o que fazer. Todo o SQL da aplicação está em [`back/src/repositorio/`](back/src/repositorio/), escrito à mão; o driver `pg` apenas abre a conexão. Os dados cadastrados pelo sistema ficam no banco e continuam lá depois de reiniciar a API.
+Todo o SQL da aplicação está em [`back/src/repositorio/`](back/src/repositorio/), escrito à mão; o driver `pg` apenas abre a conexão. Os dados cadastrados pelo sistema ficam no banco e continuam lá depois de reiniciar a API.
 
 ## Logins de teste
 
