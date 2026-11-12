@@ -186,8 +186,8 @@ O modelo relacional não consegue expressar estas regras apenas com chaves e `CH
 ```
 back/     API (Node.js + Express)
   src/routes/       rotas HTTP
-  src/repositorio/  acesso aos dados (será reescrito com SQL)
-  src/data.js       armazenamento em memória (provisório)
+  src/repositorio/  acesso ao banco: todo o SQL escrito à mão
+  src/db.js         conexão com o PostgreSQL (driver pg)
   sql/              scripts SQL: esquema, dados e consultas de exemplo
 front/    interface web
 docs/     diagrama ER e demais documentos
@@ -195,13 +195,27 @@ docs/     diagrama ER e demais documentos
 
 ## Como rodar
 
-```bash
-# 1. backend
-cd back
-npm install
-npm start          # sobe em http://localhost:3000/api
+**1. Backend.** O PostgreSQL precisa estar rodando e o banco criado (veja [Banco de dados](#banco-de-dados-postgresql) abaixo). Dentro da pasta `back`, no **PowerShell**:
 
-# 2. frontend: em outro terminal, sirva a pasta front/
+```powershell
+npm install
+$env:PGPASSWORD = "sua-senha-do-postgres"
+npm start
+```
+
+Ou no **Prompt de Comando (cmd)**:
+
+```cmd
+npm install
+set PGPASSWORD=sua-senha-do-postgres
+npm start
+```
+
+A API sobe em `http://localhost:3000/api`. A senha é informada por variável de ambiente (nunca fica no código) e vale apenas na janela em que foi definida: se fechá-la, defina de novo.
+
+**2. Frontend.** Em outro terminal, sirva a pasta `front/`:
+
+```bash
 cd front
 npx serve
 ```
@@ -232,7 +246,27 @@ psql -U postgres -d conetaai -f back\sql\03_consultas_exemplo.sql
 
 O `psql` pede a senha do usuário `postgres` definida na instalação do PostgreSQL. O serviço do PostgreSQL precisa estar em execução.
 
-> Por enquanto a API ainda guarda os dados em memória. A ligação da API a este banco é o próximo passo do projeto.
+### Ligando a API ao banco
+
+Com o banco criado e povoado, suba a API informando a senha do `postgres` **por variável de ambiente** (a senha nunca fica no código):
+
+No **PowerShell**:
+
+```powershell
+cd back
+$env:PGPASSWORD = "sua-senha-do-postgres"
+npm start
+```
+
+No **cmd**:
+
+```cmd
+cd back
+set PGPASSWORD=sua-senha-do-postgres
+npm start
+```
+
+Ao iniciar, a API confere a conexão e mostra `Conectado ao PostgreSQL: banco "conetaai" ... (12 tabelas)`. Se o serviço estiver parado, a senha estiver errada ou o banco não existir, ela explica o que fazer. Todo o SQL da aplicação está em [`back/src/repositorio/`](back/src/repositorio/), escrito à mão; o driver `pg` apenas abre a conexão. Os dados cadastrados pelo sistema ficam no banco e continuam lá depois de reiniciar a API.
 
 **Usuários de teste** (senha `123456`)
 
@@ -251,5 +285,5 @@ Também é possível criar contas novas pela tela de cadastro.
 - [x] Etapa 2: diagrama entidade-relacionamento
 - [x] Etapa 3: modelo lógico (mapeamento ER → relacional)
 - [x] Etapa 4: scripts SQL de criação e povoamento
-- [ ] Integração da API com o SGBD (hoje os dados ficam em memória e reiniciam com o servidor)
+- [x] Integração da API com o SGBD (PostgreSQL, com SQL escrito à mão)
 - [ ] Etapa 5: vídeo de apresentação (até 10 min)
