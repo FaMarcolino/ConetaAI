@@ -71,7 +71,7 @@ Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 
 A entidade **Curtida** existe porque há dois sentidos de curtida (estudante → vaga e empresa → estudante, para uma vaga), e o mesmo par (estudante, vaga) pode ter uma de cada. O atributo `origem` diz de qual lado ela veio. Na ligação com o Estudante, ele é o autor quando `origem = estudante` e o alvo quando `origem = empresa`.
 
-O relacionamento **origina** liga o Match às curtidas que o formaram: um match é originado por exatamente 2 curtidas, **uma de origem `estudante` e uma de origem `empresa`**, ambas do mesmo par (estudante, vaga). A cardinalidade fica `(1,n)` porque a notação só usa `0`, `1` e `n`; o "exatamente 2, uma de cada origem" é uma regra garantida no banco (veja abaixo).
+O relacionamento **origina** liga o Match às curtidas que o formaram: um match é originado por exatamente 2 curtidas, **uma de origem `estudante` e uma de origem `empresa`**, ambas do mesmo par (estudante, vaga). A cardinalidade fica `(1,n)` porque a notação só usa `0`, `1` e `n`; o "exatamente 2, uma de cada origem" é uma regra garantida no banco por triggers, explicada na seção [Regras que não cabem só em chaves e restrições](#regras-que-não-cabem-só-em-chaves-e-restrições).
 
 ## Modelo lógico (mapeamento ER → relacional)
 
