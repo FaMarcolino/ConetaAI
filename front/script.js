@@ -4,11 +4,20 @@
 const API_BASE = "http://localhost:3000/api";
 
 async function apiFetch(caminho, opcoes = {}) {
-  const resposta = await fetch(`${API_BASE}${caminho}`, {
-    headers: { "Content-Type": "application/json" },
-    ...opcoes,
-  });
+  const cabecalhos = { "Content-Type": "application/json" };
+  // depois do login, todas as chamadas levam o token que identifica quem está logado
+  if (sessao.token) cabecalhos.Authorization = `Bearer ${sessao.token}`;
+
+  const resposta = await fetch(`${API_BASE}${caminho}`, { ...opcoes, headers: cabecalhos });
   const dados = await resposta.json().catch(() => ({}));
+
+  // token vencido ou inválido (por exemplo, depois de reiniciar a API): volta para o login
+  if (resposta.status === 401 && sessao.token) {
+    sessao.tipo = null;
+    sessao.usuario = null;
+    sessao.token = null;
+    irPara("tela-login");
+  }
   if (!resposta.ok) throw new Error(dados.erro || "Erro ao falar com o servidor.");
   return dados;
 }
@@ -73,7 +82,7 @@ function lerChips(idContainer) {
    ========================================================================= */
 let papelSelecionadoNoLogin = "estudante";
 
-const sessao = { tipo: null, usuario: null }; // preenchido depois do login
+const sessao = { tipo: null, usuario: null, token: null }; // preenchido depois do login
 
 const estado = {
   vagasCache: [],
@@ -132,16 +141,17 @@ document.getElementById("formLogin").addEventListener("submit", async (e) => {
       method: "POST",
       body: JSON.stringify({ email: email.value, senha: senha.value, tipo: papelSelecionadoNoLogin }),
     });
-    await entrarNaApp(resposta.tipo, resposta.usuario);
+    await entrarNaApp(resposta.tipo, resposta.usuario, resposta.token);
   } catch (erro) {
     mostrarToast(erro.message);
   }
 });
 
 // Usado pelo login e também pelo cadastro (que já entra direto na conta criada)
-async function entrarNaApp(tipo, usuario) {
+async function entrarNaApp(tipo, usuario, token) {
   sessao.tipo = tipo;
   sessao.usuario = usuario;
+  sessao.token = token;
   const inicial = usuario.nome.charAt(0).toUpperCase();
 
   if (tipo === "estudante") {
@@ -155,7 +165,13 @@ async function entrarNaApp(tipo, usuario) {
   }
 }
 
-document.querySelectorAll("[data-sair]").forEach((b) => (b.onclick = () => irPara("tela-login")));
+// sair apaga o token da memória: sem ele, a API recusa qualquer chamada
+document.querySelectorAll("[data-sair]").forEach((b) => (b.onclick = () => {
+  sessao.tipo = null;
+  sessao.usuario = null;
+  sessao.token = null;
+  irPara("tela-login");
+}));
 
 /* =========================================================================
    CADASTRO (estudante e empresa)
@@ -196,7 +212,8 @@ document.getElementById("formCadastroEstudante").addEventListener("submit", asyn
     mostrarToast("Conta criada! Bem-vindo(a), " + novo.nome.split(" ")[0] + ".");
     e.target.reset();
     renderizarChips("cadEstHabilidades", catalogos.tecnologias, []);
-    await entrarNaApp("estudante", novo);
+    const { token, ...perfil } = novo; // o cadastro já devolve o token: a pessoa entra direto
+    await entrarNaApp("estudante", perfil, token);
   } catch (erro) {
     mostrarToast(erro.message);
   }
@@ -215,7 +232,8 @@ document.getElementById("formCadastroEmpresa").addEventListener("submit", async 
     const nova = await apiFetch("/empresas", { method: "POST", body: JSON.stringify(corpo) });
     mostrarToast("Conta criada! Bem-vindo(a), " + nova.nome + ".");
     e.target.reset();
-    await entrarNaApp("empresa", nova);
+    const { token, ...perfil } = nova; // o cadastro já devolve o token: a pessoa entra direto
+    await entrarNaApp("empresa", perfil, token);
   } catch (erro) {
     mostrarToast(erro.message);
   }

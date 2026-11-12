@@ -8,6 +8,7 @@ const {
   MODALIDADES, textoPreenchido, emailValido, paraLista, semSenha,
   previsaoConclusaoValida, normalizarAreasInteresse,
 } = require("../validacao");
+const { gerarHash, criarToken, autenticar, exigirProprioPerfil } = require("../autenticacao");
 
 const ERRO_PREVISAO = "Previsão de conclusão inválida. Use o formato AAAA-MM (ex.: 2027-12).";
 
@@ -42,6 +43,7 @@ router.post("/", assincrono(async (req, res) => {
   }
   if (!emailValido(email)) return res.status(400).json({ erro: "Digite um e-mail válido." });
   if (senha.length < 6) return res.status(400).json({ erro: "A senha precisa de pelo menos 6 caracteres." });
+  if (senha.length > 100) return res.status(400).json({ erro: "A senha pode ter no máximo 100 caracteres." });
   if (!MODALIDADES.includes(modalidade)) return res.status(400).json({ erro: "Modalidade inválida." });
   const meses = Number(disponibilidadeMeses);
   if (!Number.isInteger(meses) || meses < 1) {
@@ -66,7 +68,7 @@ router.post("/", assincrono(async (req, res) => {
   const novo = await estudantes.criar({
     nome: nome.trim(),
     email,
-    senha,
+    senha: await gerarHash(senha), // só o hash vai para o banco, nunca a senha
     curso: catalogo.curso,
     habilidades: catalogo.habilidades,
     areasInteresse: areas,
@@ -75,18 +77,19 @@ router.post("/", assincrono(async (req, res) => {
     disponibilidadeMeses: meses,
     previsaoConclusao,
   });
-  res.status(201).json(semSenha(novo));
+  // quem acabou de se cadastrar já entra: recebe o token junto com o perfil
+  res.status(201).json({ ...semSenha(novo), token: criarToken({ id: novo.id, tipo: "estudante" }) });
 }));
 
-// GET /api/estudantes/:id
-router.get("/:id", assincrono(async (req, res) => {
+// GET /api/estudantes/:id - só o próprio estudante vê o seu perfil
+router.get("/:id", autenticar, exigirProprioPerfil("estudante"), assincrono(async (req, res) => {
   const estudante = await estudantes.buscarPorId(req.params.id);
   if (!estudante) return res.status(404).json({ erro: "Estudante não encontrado." });
   res.json(semSenha(estudante));
 }));
 
-// PUT /api/estudantes/:id  - atualiza os campos do perfil (currículo, habilidades, etc.)
-router.put("/:id", assincrono(async (req, res) => {
+// PUT /api/estudantes/:id  - atualiza os campos do perfil (só o próprio estudante)
+router.put("/:id", autenticar, exigirProprioPerfil("estudante"), assincrono(async (req, res) => {
   const estudante = await estudantes.buscarPorId(req.params.id);
   if (!estudante) return res.status(404).json({ erro: "Estudante não encontrado." });
 
@@ -100,6 +103,13 @@ router.put("/:id", assincrono(async (req, res) => {
 
   if (alteracoes.modalidade !== undefined && !MODALIDADES.includes(alteracoes.modalidade)) {
     return res.status(400).json({ erro: "Modalidade inválida." });
+  }
+  if (alteracoes.disponibilidadeMeses !== undefined) {
+    const meses = Number(alteracoes.disponibilidadeMeses);
+    if (!Number.isInteger(meses) || meses < 1) {
+      return res.status(400).json({ erro: "Informe a disponibilidade em meses (número inteiro, mínimo 1)." });
+    }
+    alteracoes.disponibilidadeMeses = meses;
   }
   if (alteracoes.previsaoConclusao !== undefined && !previsaoConclusaoValida(alteracoes.previsaoConclusao)) {
     return res.status(400).json({ erro: ERRO_PREVISAO });

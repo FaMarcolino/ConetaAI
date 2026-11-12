@@ -1,74 +1,121 @@
 // src/repositorio/vagas.js
-const { vagas, empresas, likes, matches, mensagens, gerarId } = require("../data");
+// Acesso à tabela vaga e às ligações vaga_curso (aceita) e vaga_tecnologia (requer).
+const { consulta, transacao, paraId } = require("../db");
 const { normalizar } = require("../validacao");
 
-// O nome da empresa não é guardado na vaga: ele vem da empresa dona dela
-// (no SQL isso será um JOIN com a tabela empresa).
-function comEmpresa(vaga) {
-  const empresa = empresas.find((e) => e.id === vaga.empresaId);
-  return { ...vaga, empresa: empresa ? empresa.nome : "" };
-}
+// Monta a vaga no formato da API: o nome da empresa vem do JOIN com empresa, e os cursos
+// aceitos e as tecnologias exigidas vêm como listas (subconsultas).
+const SELECT_VAGA = `
+  SELECT v.id,
+         v.empresa_id                          AS "empresaId",
+         e.nome                                AS empresa,
+         v.cargo,
+         COALESCE((SELECT array_agg(c.nome ORDER BY c.nome)::text[]
+                     FROM vaga_curso vc
+                     JOIN curso c ON c.id = vc.curso_id
+                    WHERE vc.vaga_id = v.id), ARRAY[]::text[])       AS "cursoDesejado",
+         COALESCE((SELECT array_agg(t.nome ORDER BY t.nome)::text[]
+                     FROM vaga_tecnologia vt
+                     JOIN tecnologia t ON t.id = vt.tecnologia_id
+                    WHERE vt.vaga_id = v.id), ARRAY[]::text[])       AS tecnologias,
+         COALESCE(v.cidade, '')                AS cidade,
+         v.modalidade,
+         COALESCE(v.faixa_salarial, '')        AS "faixaSalarial",
+         v.periodo_minimo_meses                AS "periodoMinimoMeses",
+         v.status
+    FROM vaga v
+    JOIN empresa e ON e.id = v.empresa_id`;
+
+// Comparação sem acento e sem diferença de maiúsculas, feita no próprio SQL
+// ("São Paulo" encontra "sao paulo"). O PostgreSQL tem a extensão unaccent para isso,
+// mas ela exige instalação à parte; translate() já vem pronto.
+const COM_ACENTO = "áàâãäéèêëíìîïóòôõöúùûüçñ";
+const SEM_ACENTO = "aaaaaeeeeiiiiooooouuuucn";
+const semAcentoSql = (expressao) =>
+  `lower(translate(${expressao}, '${COM_ACENTO + COM_ACENTO.toUpperCase()}', '${SEM_ACENTO + SEM_ACENTO.toUpperCase()}'))`;
+
+// escapa os caracteres que têm significado especial dentro de um LIKE
+const escaparLike = (texto) => texto.replace(/[\\%_]/g, "\\$&");
 
 // filtros opcionais: empresaId, status, cidade, modalidade, tecnologia, q (cargo ou empresa)
 async function listar(filtros = {}) {
   const { empresaId, status, cidade, modalidade, tecnologia, q } = filtros;
-  return vagas
-    .map(comEmpresa)
-    .filter((v) => !empresaId || v.empresaId === empresaId)
-    .filter((v) => !status || v.status === status)
-    .filter((v) => !cidade || normalizar(v.cidade).includes(normalizar(cidade)))
-    .filter((v) => !modalidade || v.modalidade === modalidade)
-    .filter((v) => !tecnologia || v.tecnologias.some((t) => normalizar(t) === normalizar(tecnologia)))
-    .filter((v) => !q || normalizar(`${v.cargo} ${v.empresa}`).includes(normalizar(q)));
+  const condicoes = [];
+  const valores = [];
+  const adicionar = (valor) => { valores.push(valor); return `$${valores.length}`; };
+
+  if (empresaId !== undefined) {
+    const id = paraId(empresaId);
+    if (id === null) return [];
+    condicoes.push(`v.empresa_id = ${adicionar(id)}`);
+  }
+  if (status) condicoes.push(`v.status = ${adicionar(status)}`);
+  if (modalidade) condicoes.push(`v.modalidade = ${adicionar(modalidade)}`);
+  if (cidade) {
+    condicoes.push(`${semAcentoSql("COALESCE(v.cidade, '')")} LIKE ${adicionar("%" + escaparLike(normalizar(cidade)) + "%")}`);
+  }
+  if (tecnologia) {
+    condicoes.push(`EXISTS (SELECT 1 FROM vaga_tecnologia vt
+                             JOIN tecnologia t ON t.id = vt.tecnologia_id
+                            WHERE vt.vaga_id = v.id AND lower(t.nome) = ${adicionar(normalizar(tecnologia))})`);
+  }
+  if (q) {
+    condicoes.push(`${semAcentoSql("v.cargo || ' ' || e.nome")} LIKE ${adicionar("%" + escaparLike(normalizar(q)) + "%")}`);
+  }
+
+  const onde = condicoes.length ? ` WHERE ${condicoes.join(" AND ")}` : "";
+  const resposta = await consulta(`${SELECT_VAGA}${onde} ORDER BY v.id`, valores);
+  return resposta.rows;
 }
 
 async function buscarPorId(id) {
-  const vaga = vagas.find((v) => v.id === id);
-  return vaga ? comEmpresa(vaga) : null;
+  const idNumerico = paraId(id);
+  if (idNumerico === null) return null;
+  const resposta = await consulta(`${SELECT_VAGA} WHERE v.id = $1`, [idNumerico]);
+  return resposta.rows[0] || null;
 }
 
+// dados: empresaId, cargo, cursoDesejado[] e tecnologias[] (nomes já validados),
+// cidade, modalidade, faixaSalarial, periodoMinimoMeses
 async function criar(dados) {
-  const nova = {
-    id: gerarId("v"),
-    empresaId: dados.empresaId,
-    cargo: dados.cargo,
-    cursoDesejado: dados.cursoDesejado,
-    tecnologias: dados.tecnologias,
-    cidade: dados.cidade,
-    modalidade: dados.modalidade,
-    faixaSalarial: dados.faixaSalarial,
-    periodoMinimoMeses: dados.periodoMinimoMeses,
-    status: "Ativa",
-  };
-  vagas.push(nova);
-  return comEmpresa(nova);
+  const id = await transacao(async (cliente) => {
+    const resposta = await cliente.query(
+      `INSERT INTO vaga (cargo, modalidade, cidade, faixa_salarial, periodo_minimo_meses, empresa_id)
+       VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), $5, $6)
+       RETURNING id`,
+      [dados.cargo, dados.modalidade, dados.cidade || "", dados.faixaSalarial || "",
+       dados.periodoMinimoMeses, paraId(dados.empresaId)]
+    );
+    const novoId = resposta.rows[0].id;
+    await cliente.query(
+      `INSERT INTO vaga_curso (vaga_id, curso_id)
+       SELECT $1, id FROM curso WHERE nome = ANY($2::text[])`,
+      [novoId, dados.cursoDesejado]
+    );
+    await cliente.query(
+      `INSERT INTO vaga_tecnologia (vaga_id, tecnologia_id)
+       SELECT $1, id FROM tecnologia WHERE nome = ANY($2::text[])`,
+      [novoId, dados.tecnologias]
+    );
+    return novoId;
+  });
+  return buscarPorId(id);
 }
 
 async function atualizarStatus(id, status) {
-  const vaga = vagas.find((v) => v.id === id);
-  if (!vaga) return null;
-  vaga.status = status;
-  return comEmpresa(vaga);
+  const idNumerico = paraId(id);
+  if (idNumerico === null) return null;
+  const resposta = await consulta("UPDATE vaga SET status = $1 WHERE id = $2", [status, idNumerico]);
+  return resposta.rowCount ? buscarPorId(idNumerico) : null;
 }
 
-// Exclui a vaga e tudo que depende dela (curtidas, matches e mensagens).
-// No SQL isso será feito por ON DELETE CASCADE.
+// Exclui a vaga. As curtidas, os matches, as mensagens e as ligações com cursos e
+// tecnologias são apagados pelo próprio banco (ON DELETE CASCADE).
 async function excluir(id) {
-  const indice = vagas.findIndex((v) => v.id === id);
-  if (indice === -1) return false;
-  vagas.splice(indice, 1);
-
-  const idsMatchesRemovidos = matches.filter((m) => m.vagaId === id).map((m) => m.id);
-  removerDoArray(likes, (l) => l.vagaId === id);
-  removerDoArray(matches, (m) => m.vagaId === id);
-  removerDoArray(mensagens, (m) => idsMatchesRemovidos.includes(m.matchId));
-  return true;
+  const idNumerico = paraId(id);
+  if (idNumerico === null) return false;
+  const resposta = await consulta("DELETE FROM vaga WHERE id = $1", [idNumerico]);
+  return resposta.rowCount > 0;
 }
 
-function removerDoArray(array, deveRemover) {
-  for (let i = array.length - 1; i >= 0; i--) {
-    if (deveRemover(array[i])) array.splice(i, 1);
-  }
-}
-
-module.exports = { listar, buscarPorId, criar, atualizarStatus, excluir, comEmpresa };
+module.exports = { listar, buscarPorId, criar, atualizarStatus, excluir };

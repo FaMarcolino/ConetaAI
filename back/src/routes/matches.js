@@ -2,15 +2,25 @@
 const express = require("express");
 const matches = require("../repositorio/matches");
 const assincrono = require("../assincrono");
+const { autenticar, mesmoId } = require("../autenticacao");
 
 const router = express.Router();
 
-// GET /api/matches?estudanteId=est_1   -> matches de um estudante (aba "Matches" dele)
-// GET /api/matches?vagaId=v1           -> matches de uma vaga específica
-// GET /api/matches?empresaId=emp_1     -> matches de TODAS as vagas da empresa (aba "Matches" dela)
-// ?desde=2026-11-01T00:00:00.000Z      -> só matches criados a partir dessa data (ex.: "este mês")
-router.get("/", assincrono(async (req, res) => {
+// GET /api/matches   (exige login; cada um só enxerga os seus próprios matches)
+//   estudante logado -> matches dele      (?estudanteId=<o próprio id> é opcional)
+//   empresa logada   -> matches das vagas dela  (?empresaId=<o próprio id> é opcional)
+// Filtros extras: ?vagaId=1 e ?desde=2026-11-01T00:00:00.000Z (só matches criados a partir da data)
+router.get("/", autenticar, assincrono(async (req, res) => {
   const { estudanteId, vagaId, empresaId, desde } = req.query;
+  const ehEstudante = req.usuario.tipo === "estudante";
+
+  // pedir os matches de outra pessoa é proibido
+  if (ehEstudante && ((estudanteId !== undefined && !mesmoId(estudanteId, req.usuario.id)) || empresaId !== undefined)) {
+    return res.status(403).json({ erro: "Você só pode ver os seus próprios matches." });
+  }
+  if (!ehEstudante && ((empresaId !== undefined && !mesmoId(empresaId, req.usuario.id)) || estudanteId !== undefined)) {
+    return res.status(403).json({ erro: "Você só pode ver os matches das suas próprias vagas." });
+  }
 
   let dataInicial;
   if (desde !== undefined) {
@@ -20,7 +30,13 @@ router.get("/", assincrono(async (req, res) => {
     }
   }
 
-  res.json(await matches.listarDetalhado({ estudanteId, vagaId, empresaId, desde: dataInicial }));
+  // o filtro principal vem SEMPRE do token, nunca do que o cliente digitou
+  res.json(await matches.listarDetalhado({
+    estudanteId: ehEstudante ? req.usuario.id : undefined,
+    empresaId: ehEstudante ? undefined : req.usuario.id,
+    vagaId,
+    desde: dataInicial,
+  }));
 }));
 
 module.exports = router;

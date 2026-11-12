@@ -1,18 +1,28 @@
 // src/repositorio/mensagens.js
 // Entidade Mensagem do ER: { id, matchId, enviadoPor, texto, criadoEm }
 // enviadoPor = 'estudante' ou 'empresa'
-const { mensagens, gerarId } = require("../data");
+const { consulta, paraId } = require("../db");
+
+const COLUNAS = `id, match_id AS "matchId", enviado_por AS "enviadoPor", texto, criado_em AS "criadoEm"`;
 
 async function listarPorMatch(matchId) {
-  return mensagens
-    .filter((m) => m.matchId === matchId)
-    .sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
+  const id = paraId(matchId);
+  if (id === null) return [];
+  const resposta = await consulta(
+    `SELECT ${COLUNAS} FROM mensagem WHERE match_id = $1 ORDER BY criado_em, id`,
+    [id]
+  );
+  return resposta.rows;
 }
 
 async function criar(matchId, enviadoPor, texto) {
-  const mensagem = { id: gerarId("msg"), matchId, enviadoPor, texto, criadoEm: new Date().toISOString() };
-  mensagens.push(mensagem);
-  return mensagem;
+  const resposta = await consulta(
+    `INSERT INTO mensagem (match_id, enviado_por, texto)
+     VALUES ($1, $2, $3)
+     RETURNING ${COLUNAS}`,
+    [paraId(matchId), enviadoPor, texto]
+  );
+  return resposta.rows[0];
 }
 
 module.exports = { listarPorMatch, criar };

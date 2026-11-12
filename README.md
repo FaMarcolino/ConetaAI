@@ -266,18 +266,60 @@ set PGPASSWORD=sua-senha-do-postgres
 npm start
 ```
 
-Ao iniciar, a API confere a conexão e mostra `Conectado ao PostgreSQL: banco "conetaai" ... (12 tabelas)`. Se o serviço estiver parado, a senha estiver errada ou o banco não existir, ela explica o que fazer. Todo o SQL da aplicação está em [`back/src/repositorio/`](back/src/repositorio/), escrito à mão; o driver `pg` apenas abre a conexão. Os dados cadastrados pelo sistema ficam no banco e continuam lá depois de reiniciar a API.
+Opcionalmente defina também `SEGREDO_TOKEN` (veja [Segurança](#segurança)). Ao iniciar, a API confere a conexão e mostra `Conectado ao PostgreSQL: banco "conetaai" ... (12 tabelas)`. Se o serviço estiver parado, a senha estiver errada ou o banco não existir, ela explica o que fazer. Todo o SQL da aplicação está em [`back/src/repositorio/`](back/src/repositorio/), escrito à mão; o driver `pg` apenas abre a conexão. Os dados cadastrados pelo sistema ficam no banco e continuam lá depois de reiniciar a API.
 
-**Usuários de teste** (senha `123456`)
+## Logins de teste
 
-| Tipo | E-mail |
-|------|--------|
-| Estudante | luan@email.com |
-| Estudante | marina@email.com |
-| Empresa | contato@nortelsistemas.com.br |
-| Empresa | contato@vettadata.com |
+O banco já vem com seis perfis de demonstração (criados pelo `02_seed.sql`). **A senha de todos é `123456`.**
 
-Também é possível criar contas novas pela tela de cadastro.
+### Estudantes (marque "Estudante" na tela de login)
+
+| Nome | E-mail | Senha | Curso | Cidade · modalidade | Habilidades |
+|------|--------|-------|-------|---------------------|-------------|
+| Luan | `luan@email.com` | `123456` | Sistemas de Informação | Belo Horizonte · híbrido | javascript, sql, git, react |
+| Marina Alves | `marina@email.com` | `123456` | Sistemas de Informação | Belo Horizonte · híbrido | javascript, sql, react, css |
+| Pedro Souza | `pedro@email.com` | `123456` | Ciência da Computação | Belo Horizonte · presencial | python, sql |
+| Bianca Ferreira | `bianca@email.com` | `123456` | Engenharia de Software | Contagem · remoto | javascript, react, typescript |
+
+### Empresas (marque "Empresa" na tela de login)
+
+| Empresa | E-mail | Senha | Setor | Vagas |
+|---------|--------|-------|-------|-------|
+| Nortel Sistemas | `contato@nortelsistemas.com.br` | `123456` | Tecnologia da Informação | Engenharia de Software e Infraestrutura (Belo Horizonte) |
+| Vetta Data | `contato@vettadata.com` | `123456` | Dados e Analytics | Análise de Dados (São Paulo, remoto) |
+
+### Roteiro rápido para ver um match
+1. Entre como **Luan** e curta a vaga "Estágio em Engenharia de Software" (aba Vagas ou Buscar).
+2. Saia e entre como **Nortel Sistemas**. Em "Ver candidatos" dessa vaga, curta o **Luan**: aparece "Deu match!".
+3. Abra o chat e troque mensagens; depois entre como Luan de novo para ver a conversa do outro lado.
+
+### Observações
+- No banco as senhas **não aparecem em texto**: cada uma é guardada como hash `scrypt`, com sal próprio (veja [Segurança](#segurança)). A senha `123456` só existe aqui na documentação.
+- Contas criadas pela tela de **Cadastre-se** usam a senha que a pessoa escolher (mínimo de 6 caracteres).
+- Para criar outro usuário de teste direto no SQL, gere o hash da senha: `node scripts/gerar-hash.js <senha>`, dentro da pasta `back`.
+- Se os logins acima forem recusados ("E-mail ou senha inválidos"), o banco provavelmente foi criado com uma versão antiga dos scripts: rode de novo `back/sql/01_schema.sql` e `back/sql/02_seed.sql`.
+
+## Segurança
+
+| Tema | Como está |
+|------|-----------|
+| **Senhas** | Guardadas como hash `scrypt` (algoritmo próprio para senhas, lento de propósito) com sal aleatório por senha. Duas pessoas com a mesma senha têm hashes diferentes. A API nunca devolve a senha nem o hash. |
+| **Login** | `POST /api/auth/login` devolve um **token** assinado (formato JWT, HS256) com o id, o tipo (estudante ou empresa) e a validade de 8 horas. |
+| **Token** | O front envia `Authorization: Bearer <token>` em toda chamada. Quem está logado vem **do token**, nunca de um id digitado pelo cliente. Token ausente, adulterado, expirado ou assinado com outro segredo é recusado (401). |
+| **Autorização** | Cada pessoa só mexe no que é seu: o estudante vê e edita só o próprio perfil e os próprios matches; a empresa só gerencia as próprias vagas, vê candidatos só das vagas dela e só curte em nome dela; só os participantes de um match leem e escrevem no chat. Tentativas contra dados de outra pessoa recebem 403. |
+| **SQL injection** | Todo SQL usa parâmetros (`$1`, `$2`...); os valores nunca são colados no texto do comando. |
+| **Segredo do token** | Vem da variável `SEGREDO_TOKEN`. Se ela não existir, a API cria um segredo temporário ao iniciar, e os logins valem só até reiniciar a API. |
+
+Para manter os logins válidos mesmo depois de reiniciar a API, defina um segredo fixo (qualquer texto longo) antes do `npm start`:
+
+```powershell
+$env:SEGREDO_TOKEN = "um-texto-longo-e-aleatorio"
+```
+```cmd
+set SEGREDO_TOKEN=um-texto-longo-e-aleatorio
+```
+
+**Limitações conhecidas (é um protótipo):** não há limite de tentativas de login, a comunicação é HTTP e não HTTPS, o token fica só na memória da página (recarregar a página pede o login de novo) e o servidor não "revoga" tokens antes de vencerem.
 
 ## Andamento
 

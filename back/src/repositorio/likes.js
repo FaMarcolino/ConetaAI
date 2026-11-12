@@ -1,28 +1,55 @@
 // src/repositorio/likes.js
 // Entidade Curtida do ER: { id, origem, estudanteId, vagaId, criadoEm, matchId }
-// matchId fica null até as duas curtidas do par formarem um match (relacionamento "origina").
 // origem = 'estudante' (estudante curtiu a vaga) ou 'empresa' (empresa curtiu o estudante para a vaga).
-const { likes, gerarId } = require("../data");
+// matchId fica null até as duas curtidas do par formarem um match (relacionamento "origina").
+const { consulta, paraId } = require("../db");
+
+const COLUNAS = `id, origem, estudante_id AS "estudanteId", vaga_id AS "vagaId",
+                 criado_em AS "criadoEm", match_id AS "matchId"`;
 
 // filtros opcionais: origem, estudanteId, vagaId
 async function listar(filtros = {}) {
   const { origem, estudanteId, vagaId } = filtros;
-  return likes
-    .filter((l) => !origem || l.origem === origem)
-    .filter((l) => !estudanteId || l.estudanteId === estudanteId)
-    .filter((l) => !vagaId || l.vagaId === vagaId);
+  const condicoes = [];
+  const valores = [];
+  const adicionar = (valor) => { valores.push(valor); return `$${valores.length}`; };
+
+  if (origem) condicoes.push(`origem = ${adicionar(origem)}`);
+  if (estudanteId !== undefined) {
+    const id = paraId(estudanteId);
+    if (id === null) return [];
+    condicoes.push(`estudante_id = ${adicionar(id)}`);
+  }
+  if (vagaId !== undefined) {
+    const id = paraId(vagaId);
+    if (id === null) return [];
+    condicoes.push(`vaga_id = ${adicionar(id)}`);
+  }
+
+  const onde = condicoes.length ? ` WHERE ${condicoes.join(" AND ")}` : "";
+  const resposta = await consulta(`SELECT ${COLUNAS} FROM curtida${onde} ORDER BY id`, valores);
+  return resposta.rows;
 }
 
 async function existe(origem, estudanteId, vagaId) {
-  return likes.some((l) => l.origem === origem && l.estudanteId === estudanteId && l.vagaId === vagaId);
+  const resposta = await consulta(
+    "SELECT 1 FROM curtida WHERE origem = $1 AND estudante_id = $2 AND vaga_id = $3",
+    [origem, paraId(estudanteId), paraId(vagaId)]
+  );
+  return resposta.rowCount > 0;
 }
 
-// idempotente: curtir duas vezes não cria duas linhas (no SQL: UNIQUE (estudante_id, vaga_id, origem))
+// Idempotente: curtir duas vezes não cria duas linhas. O próprio banco impede a repetição
+// (UNIQUE (estudante_id, vaga_id, origem)); ON CONFLICT DO NOTHING só evita o erro.
 async function criar(origem, estudanteId, vagaId) {
-  if (await existe(origem, estudanteId, vagaId)) return null;
-  const like = { id: gerarId("like"), origem, estudanteId, vagaId, criadoEm: new Date().toISOString(), matchId: null };
-  likes.push(like);
-  return like;
+  const resposta = await consulta(
+    `INSERT INTO curtida (origem, estudante_id, vaga_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (estudante_id, vaga_id, origem) DO NOTHING
+     RETURNING ${COLUNAS}`,
+    [origem, paraId(estudanteId), paraId(vagaId)]
+  );
+  return resposta.rows[0] || null;
 }
 
 module.exports = { listar, existe, criar };
