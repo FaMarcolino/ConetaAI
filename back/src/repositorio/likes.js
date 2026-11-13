@@ -1,11 +1,11 @@
 // src/repositorio/likes.js
-// Entidade Curtida do ER: { id, origem, estudanteId, vagaId, criadoEm, matchId }
+// Entidade Curtida do ER: { id, origem, estudanteId, vagaId, criadoEm }
 // origem = 'estudante' (estudante curtiu a vaga) ou 'empresa' (empresa curtiu o estudante para a vaga).
-// matchId fica null até as duas curtidas do par formarem um match (relacionamento "origina").
+// O match que nasce das duas curtidas guarda os ids delas (veja repositorio/matches.js).
 const { consulta, paraId } = require("../db");
 
 const COLUNAS = `id, origem, estudante_id AS "estudanteId", vaga_id AS "vagaId",
-                 criado_em AS "criadoEm", match_id AS "matchId"`;
+                 criado_em AS "criadoEm"`;
 
 // filtros opcionais: origem, estudanteId, vagaId
 async function listar(filtros = {}) {

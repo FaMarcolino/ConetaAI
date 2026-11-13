@@ -66,9 +66,7 @@ app.use((err, req, res, next) => {
 
   if (err.code && ERROS_DO_BANCO[err.code]) {
     const [status, mensagem] = ERROS_DO_BANCO[err.code];
-    // os triggers do banco escrevem a própria mensagem (ex.: "Um match exige uma curtida de cada origem...")
-    const usarMensagemDoBanco = err.code === "23514" && /^(Um match|A curtida)/.test(err.message);
-    return res.status(status).json({ erro: usarMensagemDoBanco ? err.message : mensagem });
+    return res.status(status).json({ erro: mensagem });
   }
   if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET" || err.code === "57P01") {
     return res.status(503).json({ erro: "Banco de dados indisponível no momento." });

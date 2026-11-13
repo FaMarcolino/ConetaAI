@@ -13,7 +13,7 @@ rotas (src/routes)  →  repositório (src/repositorio)  →  PostgreSQL
 - As rotas validam a requisição e chamam funções `async` do repositório.
 - O repositório contém **todo o SQL, escrito à mão**: `SELECT` com `JOIN`, subconsultas, `INSERT`, `UPDATE`, `DELETE` e transações. Não há ORM nem gerador de consultas.
 - O driver `pg` é usado **apenas** para abrir a conexão e enviar os comandos ([`src/db.js`](src/db.js)). Os valores vão como parâmetros (`$1`, `$2`, ...) e nunca são colados no texto do SQL, o que evita *SQL injection*.
-- Regras de integridade são do próprio banco: `UNIQUE`, `CHECK`, chaves estrangeiras, `ON DELETE CASCADE` e os triggers do match. A API também valida antes, para devolver mensagens claras.
+- Regras de integridade são do próprio banco: `UNIQUE`, `CHECK`, chaves estrangeiras, `ON DELETE CASCADE` e as chaves estrangeiras compostas do match (a regra "só existe match com as duas curtidas" não usa triggers). A API também valida antes, para devolver mensagens claras.
 
 ## Como rodar
 

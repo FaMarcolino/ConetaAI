@@ -67,11 +67,12 @@ Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 | gera | Vaga – Match | Vaga (1,1) · Match (0,n) |
 | participa | Estudante – Match | Estudante (1,1) · Match (0,n) |
 | contem | Match – Mensagem | Match (1,1) · Mensagem (0,n) |
-| origina | Match – Curtida | Match (0,1) · Curtida (1,n) |
+| origina_estudante | Match – Curtida | Match (0,1) · Curtida (1,1) |
+| origina_empresa | Match – Curtida | Match (0,1) · Curtida (1,1) |
 
 A entidade **Curtida** existe porque há dois sentidos de curtida (estudante → vaga e empresa → estudante, para uma vaga), e o mesmo par (estudante, vaga) pode ter uma de cada. O atributo `origem` diz de qual lado ela veio. Na ligação com o Estudante, ele é o autor quando `origem = estudante` e o alvo quando `origem = empresa`.
 
-O relacionamento **origina** liga o Match às curtidas que o formaram: um match é originado por exatamente 2 curtidas, **uma de origem `estudante` e uma de origem `empresa`**, ambas do mesmo par (estudante, vaga). A cardinalidade fica `(1,n)` porque a notação só usa `0`, `1` e `n`; o "exatamente 2, uma de cada origem" é uma regra garantida no banco por triggers, explicada na seção [Regras que não cabem só em chaves e restrições](#regras-que-não-cabem-só-em-chaves-e-restrições).
+Os dois relacionamentos entre Match e Curtida dizem de onde o match nasce: **`origina_estudante`** liga o Match à curtida do estudante e **`origina_empresa`** liga o Match à curtida da empresa, ambas do mesmo par (estudante, vaga). Em cada um, o Match tem a curtida obrigatória, `(1,1)`, e uma curtida origina no máximo um match, `(0,1)`. Assim o diagrama já diz que um match **só existe quando os dois lados curtiram**, e o banco garante isso sem triggers (veja [Como o banco garante a regra do match](#como-o-banco-garante-a-regra-do-match)).
 
 ## Modelo lógico (mapeamento ER → relacional)
 
@@ -81,8 +82,8 @@ Mapeamento feito com o algoritmo ER → relacional, a partir do diagrama acima.
 |--------------------|-----------------------------|-----------|
 | 1. Entidades regulares | Empresa, Estudante, Vaga, Curso, Tecnologia, Curtida, Match, Mensagem | 8 relações |
 | 2. Entidades fracas | Nenhuma (todas têm `id` próprio) | – |
-| 3. Relacionamentos 1:1 | Nenhum | – |
-| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem`, `origina` e os dois `curte`: chave estrangeira na relação do lado N | chaves estrangeiras |
+| 3. Relacionamentos 1:1 | `origina_estudante` e `origina_empresa`: chave estrangeira na entidade com participação total (Match) | 2 chaves estrangeiras em MATCH |
+| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem` e os dois `curte`: chave estrangeira na relação do lado N | chaves estrangeiras |
 | 5. Relacionamentos M:N | `aceita`, `requer`, `possui`: uma nova relação para cada | 3 relações |
 | 6. Atributo multivalorado | `areas_interesse`: uma nova relação | 1 relação |
 | 7 a 10. N-ários, especialização, categoria, associativa | Não existem no ER | – |
@@ -110,17 +111,19 @@ CURSO (#id, nome)
 TECNOLOGIA (#id, nome)
   UNIQUE (nome)
 
-CURTIDA (#id, origem, criado_em, estudante_id, vaga_id, match_id?)
+CURTIDA (#id, origem, criado_em, estudante_id, vaga_id)
   estudante_id referencia ESTUDANTE (id)
   vaga_id referencia VAGA (id)
-  match_id referencia MATCH (id)
   UNIQUE (estudante_id, vaga_id, origem)
-  UNIQUE (match_id, origem)
 
-MATCH (#id, criado_em, estudante_id, vaga_id)
+MATCH (#id, criado_em, estudante_id, vaga_id, curtida_estudante_id, curtida_empresa_id)
   estudante_id referencia ESTUDANTE (id)
   vaga_id referencia VAGA (id)
+  curtida_estudante_id referencia CURTIDA (id)        -- relacionamento origina_estudante
+  curtida_empresa_id referencia CURTIDA (id)          -- relacionamento origina_empresa
   UNIQUE (vaga_id, estudante_id)
+  UNIQUE (curtida_estudante_id)
+  UNIQUE (curtida_empresa_id)
 
 MENSAGEM (#id, texto, enviado_por, criado_em, match_id)
   match_id referencia MATCH (id)
@@ -142,7 +145,7 @@ ESTUDANTE_AREA_INTERESSE (#estudante_id, #area)           -- atributo multivalor
 ```
 
 ### Chaves candidatas
-Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e de estudante, o `nome` de curso e de tecnologia, o par `(vaga_id, estudante_id)` do match, o trio `(estudante_id, vaga_id, origem)` da curtida e o par `(match_id, origem)` da curtida (no máximo uma curtida de cada origem por match).
+Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e de estudante, o `nome` de curso e de tecnologia, o par `(vaga_id, estudante_id)` do match, o trio `(estudante_id, vaga_id, origem)` da curtida e as colunas `curtida_estudante_id` e `curtida_empresa_id` do match (uma curtida origina no máximo um match).
 
 ### Restrições de domínio (`CHECK`)
 
@@ -162,13 +165,24 @@ Cada chave candidata vira uma cláusula `UNIQUE` no SQL: o `email` de empresa e 
 | Empresa | exclui as vagas dela (e, por consequência, tudo que depende delas) |
 | Vaga | exclui suas curtidas, matches, mensagens e as ligações em `VAGA_CURSO` e `VAGA_TECNOLOGIA` |
 | Estudante | exclui suas curtidas, matches, mensagens e as ligações em `ESTUDANTE_TECNOLOGIA` e `ESTUDANTE_AREA_INTERESSE` |
-| Match | exclui as mensagens dele; as curtidas permanecem, com `match_id` vazio |
+| Match | exclui as mensagens dele; as curtidas permanecem |
+| Curtida que originou um match | exclui também o match que dependia dela (e as mensagens dele): sem uma das curtidas, o match deixa de existir |
 | Curso ou Tecnologia | **bloqueado** enquanto houver vaga ou estudante usando |
 
-### Regras que não cabem só em chaves e restrições
-O modelo relacional não consegue expressar estas regras apenas com chaves e `CHECK`:
-- **Garantida no banco por triggers:** o match só existe quando há uma curtida de cada origem (`estudante` e `empresa`) para o mesmo par (estudante, vaga). Ao criar o match, as duas curtidas são ligadas a ele (`match_id`), e uma curtida só pode apontar para o match do seu próprio par. A aplicação também confere antes de criar.
-- **Na aplicação:** vaga encerrada não recebe curtidas.
+### Como o banco garante a regra do match
+
+A regra "o match só existe quando há uma curtida de cada origem, do mesmo par (estudante, vaga)" é garantida **só com chaves estrangeiras, sem triggers**, a partir dos dois relacionamentos `origina_estudante` e `origina_empresa`:
+
+- Pelo passo 3 do algoritmo (relacionamento 1:1), a chave estrangeira fica na entidade com **participação total**, o Match. Por isso `curtida_estudante_id` e `curtida_empresa_id` são **obrigatórias** (`NOT NULL`): não dá para criar um match sem as duas curtidas.
+- Cada curtida origina no máximo um match, por isso as duas colunas são `UNIQUE`.
+- No SQL, as duas chaves estrangeiras são **compostas**: além do id da curtida, incluem a origem e o par (estudante, vaga) do match. Assim o próprio banco recusa curtidas de outro estudante ou de outra vaga e curtidas com a origem errada (por exemplo, a curtida da empresa na coluna do estudante).
+- Para que a origem possa fazer parte da chave composta, o MATCH tem duas colunas auxiliares de valor fixo, `origem_curtida_estudante` (sempre `'estudante'`) e `origem_curtida_empresa` (sempre `'empresa'`), protegidas por `CHECK`. Elas não carregam informação nova; existem só para a chave estrangeira conferir a origem.
+
+Para criar o match, a aplicação busca as duas curtidas do par e as insere junto com o match. Se faltar uma delas, nada é inserido.
+
+### Regras que ficam na aplicação
+O modelo relacional não expressa estas regras apenas com chaves e `CHECK`:
+- Vaga encerrada não recebe curtidas.
 - Toda vaga aceita **ao menos um** curso (participação `(1,n)` de `aceita`). A chave estrangeira sozinha permitiria uma vaga sem curso.
 - Só a empresa dona da vaga pode curtir candidatos dela, encerrá-la ou excluí-la.
 
@@ -230,7 +244,7 @@ Os scripts ficam em [back/sql/](back/sql/):
 
 | Arquivo | O que faz |
 |---------|-----------|
-| `01_schema.sql` | Cria as 12 tabelas do modelo lógico, com chaves, `UNIQUE`, `CHECK` e `ON DELETE`, e 3 triggers que garantem a regra do match. Pode ser executado de novo: apaga e recria tudo. |
+| `01_schema.sql` | Cria as 12 tabelas do modelo lógico, com chaves, `UNIQUE`, `CHECK` e `ON DELETE`, e as chaves estrangeiras compostas que garantem a regra do match (sem triggers). Pode ser executado de novo: apaga e recria tudo. |
 | `02_seed.sql` | Povoa o banco com os dados de demonstração (2 empresas, 4 estudantes, 3 vagas, 13 cursos e 19 tecnologias). |
 | `03_consultas_exemplo.sql` | Cinco consultas de exemplo (junções, agregações e subconsultas) para conferir o banco. |
 

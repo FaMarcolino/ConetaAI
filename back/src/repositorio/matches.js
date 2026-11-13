@@ -18,21 +18,29 @@ async function buscarPorEstudanteEVaga(estudanteId, vagaId) {
   return resposta.rows[0] || null;
 }
 
-// Cria o match do par. O banco só aceita se existirem as duas curtidas (trigger
-// trg_match_exige_curtidas) e, depois de criar, liga as curtidas ao match
-// (trigger trg_match_vincula_curtidas). Se o match já existe, devolve o existente.
+// Cria o match do par a partir das DUAS curtidas dele: a do estudante e a da empresa.
+// Se alguma das duas não existir, o SELECT não devolve linha e nada é inserido (e, mesmo que
+// alguém tentasse inserir sem elas, o banco recusaria: as colunas curtida_estudante_id e
+// curtida_empresa_id são chaves estrangeiras obrigatórias). Se o match já existe, devolve o existente.
 async function criar(estudanteId, vagaId) {
   const existente = await buscarPorEstudanteEVaga(estudanteId, vagaId);
   if (existente) return existente;
 
   const resposta = await consulta(
-    `INSERT INTO match (estudante_id, vaga_id)
-     VALUES ($1, $2)
-     ON CONFLICT (vaga_id, estudante_id) DO NOTHING
+    `INSERT INTO match (estudante_id, vaga_id, curtida_estudante_id, curtida_empresa_id)
+     SELECT $1::int, $2::int, ce.id, cm.id
+       FROM curtida ce
+       JOIN curtida cm ON cm.estudante_id = ce.estudante_id
+                      AND cm.vaga_id      = ce.vaga_id
+                      AND cm.origem       = 'empresa'
+      WHERE ce.estudante_id = $1::int
+        AND ce.vaga_id      = $2::int
+        AND ce.origem       = 'estudante'
+     ON CONFLICT DO NOTHING
      RETURNING ${COLUNAS}`,
     [paraId(estudanteId), paraId(vagaId)]
   );
-  // se duas requisições criaram ao mesmo tempo, a segunda não recebe linha: busca a existente
+  // sem linha: ou faltou uma das curtidas, ou duas requisições criaram ao mesmo tempo
   return resposta.rows[0] || buscarPorEstudanteEVaga(estudanteId, vagaId);
 }
 

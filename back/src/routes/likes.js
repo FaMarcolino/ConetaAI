@@ -50,7 +50,7 @@ router.post("/", autenticar, assincrono(async (req, res) => {
 
   if (likeDoEstudante && likeDaEmpresa) {
     const match = await matches.criar(estudanteId, vagaId);
-    return res.json({ houveMatch: true, match });
+    if (match) return res.json({ houveMatch: true, match });
   }
 
   res.json({ houveMatch: false });
