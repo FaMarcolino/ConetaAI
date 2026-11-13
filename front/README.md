@@ -10,12 +10,11 @@ Interface web (HTML + CSS + JavaScript puro) do ConetaAI, que conecta estudantes
 
 ## Como rodar
 
-1. Suba o backend (veja `../back/README.md`): `cd back && npm install && npm start`.
-2. Sirva esta pasta com um servidor local simples, por exemplo `npx serve` dentro de `front/`, ou a extensão **Live Server** do VS Code.
-   Evite abrir o `index.html` direto como `file://`: alguns navegadores bloqueiam `fetch` nesse modo.
-3. Entre com um usuário de teste (tabela no README do backend) ou crie uma conta em **Cadastre-se**.
+O backend precisa estar rodando (veja [Como rodar](../README.md#como-rodar) no README da raiz). Depois, sirva esta pasta com um servidor local simples: `npx serve` dentro de `front/`, ou a extensão **Live Server** do VS Code. Evite abrir o `index.html` direto como `file://`: alguns navegadores bloqueiam `fetch` nesse modo.
 
-O endereço da API está na constante `API_BASE`, no topo do `script.js` (`http://localhost:3000/api`). Para abrir o app em outro dispositivo da mesma rede (um celular, por exemplo), troque `localhost` pelo IP do computador que roda o backend (ex.: `http://192.168.48.79:3000/api`).
+Entre com um dos [logins de teste](../README.md#logins-de-teste) ou crie uma conta em **Cadastre-se**.
+
+O endereço da API está na constante `API_BASE`, no topo do `script.js` (`http://localhost:3000/api`). Para abrir o app em outro dispositivo da mesma rede (um celular, por exemplo), troque `localhost` pelo IP do computador que roda o backend (ex.: `http://192.168.x.x:3000/api`).
 
 ## O que dá para fazer
 

@@ -2,7 +2,6 @@
 
 **Sistema para conectar estudantes e empresas em vagas de estágio por meio de "match".**
 
-
 ## Sobre o projeto
 
 O ConetaAI funciona como um "match" entre estudantes e vagas de estágio. A empresa publica vagas informando os cursos aceitos, as tecnologias exigidas, a modalidade, a cidade e o período mínimo. O estudante cria um perfil com curso, habilidades, cidade, modalidade preferida e disponibilidade.
@@ -184,8 +183,6 @@ Para criar o match, a aplicação busca as duas curtidas do par e as insere junt
 O modelo relacional não expressa estas regras apenas com chaves e `CHECK`:
 - Vaga encerrada não recebe curtidas.
 - Toda vaga aceita **ao menos um** curso (participação `(1,n)` de `aceita`). A chave estrangeira sozinha permitiria uma vaga sem curso.
-- Só a empresa dona da vaga pode curtir candidatos dela, encerrá-la ou excluí-la.
-
 
 ## Tecnologias
 
@@ -198,13 +195,20 @@ O modelo relacional não expressa estas regras apenas com chaves e `CHECK`:
 ## Estrutura do repositório
 
 ```
-back/     API (Node.js + Express)
-  src/routes/       rotas HTTP
-  src/repositorio/  acesso ao banco: todo o SQL escrito à mão
-  src/db.js         conexão com o PostgreSQL (driver pg)
-  sql/              scripts SQL: esquema, dados e consultas de exemplo
-front/    interface web
-docs/     diagrama ER e demais documentos
+back/                        API (Node.js + Express)
+  server.js                  ponto de entrada: confere o banco e sobe a API
+  src/
+    routes/                  rotas HTTP (uma por assunto) e regras de acesso
+    repositorio/             acesso ao banco: todo o SQL escrito à mão
+    db.js                    conexão com o PostgreSQL (driver pg)
+    autenticacao.js          hash de senha e token de login
+    validacao.js             validações usadas pelas rotas
+    matchLogic.js            cálculo do score de compatibilidade
+    assincrono.js            repassa erros das rotas assíncronas ao Express
+  sql/                       scripts SQL: esquema, dados e consultas de exemplo
+  scripts/gerar-hash.js      gera o hash de uma senha (para criar usuários no SQL)
+front/                       interface web (HTML, CSS e JavaScript)
+docs/                        diagrama ER (imagem e PDF)
 ```
 
 ## Como rodar
@@ -315,4 +319,4 @@ $env:SEGREDO_TOKEN = "um-texto-longo-e-aleatorio"
 set SEGREDO_TOKEN=um-texto-longo-e-aleatorio
 ```
 
-**Limitações conhecidas (é um protótipo):** não há limite de tentativas de login, a comunicação é HTTP e não HTTPS, o token fica só na memória da página (recarregar a página pede o login de novo) e o servidor não "revoga" tokens antes de vencerem.
+**Limitações conhecidas (é um protótipo):** não há limite de tentativas de login, a comunicação é HTTP e não HTTPS, o token fica só na memória da página (recarregar a página pede o login de novo), o servidor não "revoga" tokens antes de vencerem e o CORS aceita chamadas de qualquer origem (os dados continuam protegidos pelo token).

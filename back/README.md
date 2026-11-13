@@ -17,18 +17,9 @@ rotas (src/routes)  →  repositório (src/repositorio)  →  PostgreSQL
 
 ## Como rodar
 
-**Antes:** o PostgreSQL precisa estar rodando, o banco `conetaai` criado e os scripts de `sql/` executados (veja o README da raiz).
+O passo a passo (PostgreSQL ligado, banco criado, senha em `PGPASSWORD`, `npm install` e `npm start`) está em [Como rodar](../README.md#como-rodar), no README da raiz. Ao iniciar, o servidor confere a conexão com o banco e, se algo estiver errado (serviço parado, senha incorreta, banco inexistente), explica o que fazer e encerra.
 
-```powershell
-cd back
-npm install
-$env:PGPASSWORD = "senha-do-postgres"     # PowerShell
-npm start
-```
-
-No `cmd`, use `set PGPASSWORD=senha-do-postgres` no lugar da linha do PowerShell.
-
-O servidor confere a conexão ao iniciar e mostra `Conectado ao PostgreSQL: banco "conetaai" ... (12 tabelas)`. Se algo estiver errado (serviço parado, senha incorreta, banco inexistente), ele explica o que fazer e encerra.
+Variáveis de ambiente que a API lê:
 
 | Variável | Para que serve | Padrão |
 |----------|----------------|--------|
@@ -38,28 +29,17 @@ O servidor confere a conexão ao iniciar e mostra `Conectado ao PostgreSQL: banc
 | `PGHOST` | endereço do PostgreSQL | `localhost` |
 | `PGPORT` | porta do PostgreSQL | `5432` |
 | `PORT` | porta da API | `3000` |
-| `SEGREDO_TOKEN` | segredo que assina os tokens de login. Sem ele, a API usa um segredo temporário e os logins valem só até reiniciar | (temporário) |
+| `SEGREDO_TOKEN` | segredo que assina os tokens de login (veja [Segurança](../README.md#segurança)) | (temporário) |
 
 O servidor sobe em `http://localhost:3000/api`. Depois de qualquer alteração no código, reinicie o servidor (ou use `npm run dev`, que reinicia sozinho). Os dados **não se perdem** ao reiniciar.
 
 ## Usuários de teste
 
-| Tipo      | E-mail                        | Senha  |
-|-----------|-------------------------------|--------|
-| Estudante | luan@email.com                | 123456 |
-| Estudante | marina@email.com              | 123456 |
-| Estudante | pedro@email.com               | 123456 |
-| Estudante | bianca@email.com              | 123456 |
-| Empresa   | contato@nortelsistemas.com.br | 123456 |
-| Empresa   | contato@vettadata.com         | 123456 |
-
-No banco essas senhas ficam guardadas como **hash** (nunca em texto). Se o login for recusado, o banco foi criado com uma versão antiga: rode de novo `sql/01_schema.sql` e `sql/02_seed.sql`. Para gerar o hash de outra senha: `node scripts/gerar-hash.js <senha>`. A descrição completa dos perfis está no README da raiz do repositório.
-
-Também é possível criar contas novas pela tela de cadastro.
+Os seis perfis de demonstração (4 estudantes e 2 empresas, todos com a senha `123456`) estão descritos em [Logins de teste](../README.md#logins-de-teste), no README da raiz. Também é possível criar contas novas pela tela de cadastro.
 
 ## Autenticação e autorização
 
-As senhas são guardadas como hash `scrypt` (com sal por senha) e **nunca** voltam nas respostas. O login devolve um **token** assinado (JWT, HS256, validade de 8 horas) e todas as outras rotas, exceto as públicas, exigem:
+O login devolve um **token** (como senhas e tokens funcionam está em [Segurança](../README.md#segurança), no README da raiz). Todas as outras rotas, exceto as públicas, exigem:
 
 ```
 Authorization: Bearer <token>
@@ -175,3 +155,4 @@ curl -X POST http://localhost:3000/api/mensagens \
 - HTTPS (a comunicação entre front e API é HTTP).
 - Revogação de tokens antes da validade (por exemplo, ao trocar a senha) e renovação automática da sessão.
 - Recuperação e troca de senha.
+- Restringir o CORS: hoje a API aceita chamadas de qualquer origem (os dados continuam protegidos pelo token).
