@@ -30,7 +30,8 @@ O sistema calcula um **score de compatibilidade** entre cada estudante e cada va
 
 ## Modelo conceitual (diagrama ER)
 
-![Diagrama ER do ConetaAI](docs/modelo-er.jpg)
+<img width="1180" height="696" alt="image" src="https://github.com/user-attachments/assets/236b43db-0c2b-43ef-97c1-aecbd4293f9d" />
+
 
 Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 
@@ -61,8 +62,8 @@ Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
 | requer | Vaga – Tecnologia | (0,n) · (0,n) |
 | cursado_por | Curso – Estudante | Curso (1,1) · Estudante (0,n) |
 | possui | Estudante – Tecnologia | (0,n) · (0,n) |
-| curte | Vaga – Curtida | Vaga (1,1) · Curtida (0,n) |
-| curte | Curtida – Estudante | Estudante (1,1) · Curtida (0,n) |
+| recebe | Vaga – Curtida | Vaga (1,1) · Curtida (0,n) |
+| realiza | Curtida – Estudante | Estudante (1,1) · Curtida (0,n) |
 | gera | Vaga – Match | Vaga (1,1) · Match (0,n) |
 | participa | Estudante – Match | Estudante (1,1) · Match (0,n) |
 | contem | Match – Mensagem | Match (1,1) · Mensagem (0,n) |
