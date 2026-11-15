@@ -90,7 +90,7 @@ Validações do perfil:
 - `previsaoConclusao`: texto vazio ou ano-mês no formato `AAAA-MM` (ex.: `2027-12`).
 
 ### Empresa
-- `POST /api/empresas` — cadastro: `{ nome, email, senha, setor, cidade }` (e-mail único). A resposta traz o perfil e o `token`
+- `POST /api/empresas` — cadastro: `{ nome, email, senha, setor, cidade, descricao?, site? }` (e-mail único, senha de 6 a 100 caracteres). A resposta traz o perfil e o `token`
 - `GET /api/empresas/:id`
 - `PUT /api/empresas/:id` — atualiza a página da empresa
 
@@ -101,7 +101,9 @@ Validações do perfil:
   - `feed=1` — modo swipe: só vagas ativas que o estudante ainda não curtiu
   - `ordenar=compatibilidade` — do maior para o menor score
 - `GET /api/vagas/:id` — detalhe de uma vaga
-- `POST /api/vagas` — empresa publica uma vaga: `{ cargo, cursoDesejado[], tecnologias[], modalidade, cidade, faixaSalarial, periodoMinimoMeses }` (a dona é a empresa logada)
+- `POST /api/vagas` — empresa publica uma vaga: `{ cargo, cursoDesejado[], tecnologias[], modalidade, cidade?, faixaSalarial?, periodoMinimoMeses? }` (a dona é a empresa logada)
+  - `cursoDesejado` é obrigatório, com ao menos um curso (relacionamento `aceita` do ER; a regra `(1,n)` é conferida aqui, na API). `tecnologias` é opcional (relacionamento `requer`). Os dois só aceitam nomes das listas fechadas.
+  - A vaga nasce com `status` `Ativa`. Se `periodoMinimoMeses` não for informado, usa `6`.
 - `PUT /api/vagas/:id/status` — `{ status: "Ativa" | "Encerrada" }`
 - `DELETE /api/vagas/:id` — exclui a vaga e suas curtidas, matches e mensagens
 - `GET /api/vagas/:id/candidatos` — estudantes compatíveis, do maior para o menor score. Opções: `?scoreMinimo=50`, `?ocultarCurtidos=1`
@@ -112,7 +114,9 @@ Alterar status, excluir e ver os candidatos só é permitido para a empresa dona
 - `POST /api/likes` — `{ origem: "estudante" | "empresa", estudanteId, vagaId }`
   - `origem: "estudante"`: o estudante logado curtiu a vaga (o `estudanteId` precisa ser o dele).
   - `origem: "empresa"`: a empresa logada curtiu o estudante **para uma vaga que é dela** (`403` caso contrário).
-  - Se os dois lados já curtiram, o match é criado na hora (`houveMatch: true`). Vagas encerradas não aceitam curtidas. Curtir duas vezes não duplica.
+  - Cada chamada registra uma **Curtida** do ER (`origem`, `estudante_id`, `vaga_id`). Curtir duas vezes não duplica: o banco tem `UNIQUE (estudante_id, vaga_id, origem)`.
+  - Se os dois lados já curtiram o mesmo par (estudante, vaga), o **Match** é criado na hora e a resposta é `{ houveMatch: true, match }`. O match guarda as duas curtidas que o originaram (`curtida_estudante_id` = `origina_estudante` e `curtida_empresa_id` = `origina_empresa`), então só existe com as duas. Se ainda falta um dos lados, a resposta é `{ houveMatch: false }`.
+  - Erros: `400` se faltar `origem`, `estudanteId` ou `vagaId`, ou se a vaga estiver encerrada; `403` se a ação for de outra pessoa; `404` se a vaga ou o estudante não existir.
 - `GET /api/matches` — os matches de quem está logado: do estudante, ou de todas as vagas da empresa
 - `GET /api/matches?vagaId=1` — só os de uma vaga
 - `GET /api/matches?...&desde=2026-11-01T00:00:00.000Z` — só os matches criados a partir da data (é o que o painel da empresa usa para "Matches este mês")
@@ -152,7 +156,7 @@ curl -X POST http://localhost:3000/api/mensagens \
 ## Limitações conhecidas e próximos passos
 
 - Limite de tentativas de login (hoje é possível tentar senhas sem restrição).
-- HTTPS (a comunicação entre front e API é HTTP).
+- HTTPS próprio da API. No site hospedado a comunicação já é criptografada (HTTPS), porque o Netlify e o Render fornecem o certificado. Ao rodar na máquina local, a API responde em HTTP (`http://localhost:3000`), o que serve para desenvolvimento.
 - Revogação de tokens antes da validade (por exemplo, ao trocar a senha) e renovação automática da sessão.
 - Recuperação e troca de senha.
 - Restringir o CORS: hoje a API aceita chamadas de qualquer origem (os dados continuam protegidos pelo token).
