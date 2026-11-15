@@ -344,4 +344,4 @@ $env:SEGREDO_TOKEN = "um-texto-longo-e-aleatorio"
 set SEGREDO_TOKEN=um-texto-longo-e-aleatorio
 ```
 
-**Limitações conhecidas (é um protótipo):** não há limite de tentativas de login, a API em si responde em HTTP (no site hospedado a conexão é HTTPS, pelo certificado do Netlify e do Render; rodando localmente é HTTP), o token fica só na memória da página (recarregar a página pede o login de novo), o servidor não "revoga" tokens antes de vencerem e o CORS aceita chamadas de qualquer origem (os dados continuam protegidos pelo token).
+**Limitações conhecidas (é um protótipo):** não há limite de tentativas de login, o token fica só na memória da página (recarregar a página pede o login de novo), o servidor não "revoga" tokens antes de vencerem e o CORS aceita chamadas de qualquer origem (os dados continuam protegidos pelo token).

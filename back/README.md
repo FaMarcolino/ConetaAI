@@ -156,7 +156,6 @@ curl -X POST http://localhost:3000/api/mensagens \
 ## Limitações conhecidas e próximos passos
 
 - Limite de tentativas de login (hoje é possível tentar senhas sem restrição).
-- HTTPS próprio da API. No site hospedado a comunicação já é criptografada (HTTPS), porque o Netlify e o Render fornecem o certificado. Ao rodar na máquina local, a API responde em HTTP (`http://localhost:3000`), o que serve para desenvolvimento.
 - Revogação de tokens antes da validade (por exemplo, ao trocar a senha) e renovação automática da sessão.
 - Recuperação e troca de senha.
 - Restringir o CORS: hoje a API aceita chamadas de qualquer origem (os dados continuam protegidos pelo token).
