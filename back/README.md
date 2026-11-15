@@ -17,7 +17,7 @@ rotas (src/routes)  →  repositório (src/repositorio)  →  PostgreSQL
 
 ## Como rodar
 
-O passo a passo (PostgreSQL ligado, banco criado, senha em `PGPASSWORD`, `npm install` e `npm start`) está em [Como rodar](../README.md#como-rodar), no README da raiz. Ao iniciar, o servidor confere a conexão com o banco e, se algo estiver errado (serviço parado, senha incorreta, banco inexistente), explica o que fazer e encerra.
+O passo a passo (PostgreSQL ligado, banco criado, senha em `PGPASSWORD`, `npm install` e `npm start`) está em [Como rodar na sua máquina](../README.md#como-rodar-na-sua-máquina), no README da raiz. Ao iniciar, o servidor confere a conexão com o banco e, se algo estiver errado (serviço parado, senha incorreta, banco inexistente), explica o que fazer e encerra.
 
 Variáveis de ambiente que a API lê:
 
