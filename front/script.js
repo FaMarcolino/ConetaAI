@@ -1,7 +1,7 @@
 /* =========================================================================
    CONFIGURAÇÃO DA API
    ========================================================================= */
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = "https://conecta-ai.onrender.com/api";
 
 async function apiFetch(caminho, opcoes = {}) {
   const cabecalhos = { "Content-Type": "application/json" };
