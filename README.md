@@ -8,6 +8,11 @@ O ConetaAI funciona como um "match" entre estudantes e vagas de estágio. A empr
 
 O sistema calcula um **score de compatibilidade** entre cada estudante e cada vaga (curso, habilidades, localização, modalidade e disponibilidade) e usa esse score para ordenar o que cada lado vê. Os dois lados curtem um ao outro: quando o estudante curte a vaga **e** a empresa curte o estudante para aquela vaga, acontece o **match** e os dois passam a conversar por um chat.
 
+## Link do site hospedado
+
+O site foi hospedado tanto o front-end quanto o back-end e o banco de dados utilizando três sites para hospedar: Render, Netlify e Neon. Segue o link para acesso:
+https://lovely-daffodil-fdc398.netlify.app/
+
 ## Requisitos (regras de negócio)
 
 **O que deve ser armazenado**
