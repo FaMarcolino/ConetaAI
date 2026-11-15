@@ -30,7 +30,7 @@ O sistema calcula um **score de compatibilidade** entre cada estudante e cada va
 
 ## Modelo conceitual (diagrama ER)
 
-<img width="1180" height="696" alt="image" src="https://github.com/user-attachments/assets/236b43db-0c2b-43ef-97c1-aecbd4293f9d" />
+<img width="1180" height="696" alt="image" src="https://github.com/user-attachments/assets/dcdd994e-c6fa-4b67-bc90-b874f1b03897" />
 
 
 Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
