@@ -95,7 +95,7 @@ Mapeamento feito com o algoritmo ER → relacional, a partir do diagrama acima.
 | 1. Entidades regulares | Empresa, Estudante, Vaga, Curso, Tecnologia, Curtida, Match, Mensagem | 8 relações |
 | 2. Entidades fracas | Nenhuma (todas têm `id` próprio) | – |
 | 3. Relacionamentos 1:1 | `origina_estudante` e `origina_empresa`: chave estrangeira na entidade com participação total (Match) | 2 chaves estrangeiras em MATCH |
-| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem` e os dois `curte`: chave estrangeira na relação do lado N | chaves estrangeiras |
+| 4. Relacionamentos 1:N | `publica`, `cursado_por`, `gera`, `participa`, `contem`, `recebe` e `realiza`: chave estrangeira na relação do lado N | chaves estrangeiras |
 | 5. Relacionamentos M:N | `aceita`, `requer`, `possui`: uma nova relação para cada | 3 relações |
 | 6. Atributo multivalorado | `areas_interesse`: uma nova relação | 1 relação |
 | 7 a 10. N-ários, especialização, categoria, associativa | Não existem no ER | – |

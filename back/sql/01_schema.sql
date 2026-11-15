@@ -77,7 +77,7 @@ CREATE TABLE vaga (
                          REFERENCES empresa (id) ON DELETE CASCADE
 );
 
--- Passo 4 (1:N): as duas ligações "curte" -> curtida.estudante_id e curtida.vaga_id
+-- Passo 4 (1:N): recebe -> curtida.vaga_id e realiza -> curtida.estudante_id
 -- origem = 'estudante': o estudante curtiu a vaga
 -- origem = 'empresa'  : a empresa dona da vaga curtiu o estudante para essa vaga
 CREATE TABLE curtida (
