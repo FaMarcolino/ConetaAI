@@ -115,11 +115,12 @@ Alterar status, excluir e ver os candidatos só é permitido para a empresa dona
   - `origem: "estudante"`: o estudante logado curtiu a vaga (o `estudanteId` precisa ser o dele).
   - `origem: "empresa"`: a empresa logada curtiu o estudante **para uma vaga que é dela** (`403` caso contrário).
   - Cada chamada registra uma **Curtida** do ER (`origem`, `estudante_id`, `vaga_id`). Curtir duas vezes não duplica: o banco tem `UNIQUE (estudante_id, vaga_id, origem)`.
-  - Se os dois lados já curtiram o mesmo par (estudante, vaga), o **Match** é criado na hora e a resposta é `{ houveMatch: true, match }`. O match guarda as duas curtidas que o originaram (`curtida_estudante_id` = `origina_estudante` e `curtida_empresa_id` = `origina_empresa`), então só existe com as duas. Se ainda falta um dos lados, a resposta é `{ houveMatch: false }`.
-  - Erros: `400` se faltar `origem`, `estudanteId` ou `vagaId`, ou se a vaga estiver encerrada; `403` se a ação for de outra pessoa; `404` se a vaga ou o estudante não existir.
-- `GET /api/matches` — os matches de quem está logado: do estudante, ou de todas as vagas da empresa
+  - Se os dois lados já curtiram o mesmo par (estudante, vaga), o **Match** é criado na hora e a resposta é `{ houveMatch: true, match }`, com `match` no formato `{ id, criadoEm, estudanteId, vagaId }`. Se o match daquele par já existia, a API devolve o mesmo match, sem criar outro. Se ainda falta um dos lados, a resposta é `{ houveMatch: false }`.
+  - No banco, o match guarda as duas curtidas que o originaram (`curtida_estudante_id`, relacionamento `origina_estudante`, e `curtida_empresa_id`, relacionamento `origina_empresa`), então só existe com as duas. Esses ids ficam no banco e **não** aparecem na resposta da API.
+  - Erros: `400` se faltar `origem`, `estudanteId` ou `vagaId`, se `origem` não for `estudante` nem `empresa`, ou se a vaga estiver encerrada; `403` se a ação for de outra pessoa; `404` se a vaga ou o estudante não existir.
+- `GET /api/matches` — os matches de quem está logado: do estudante, ou de todas as vagas da empresa. Cada item vem como `{ id, criadoEm, estudanteId, vagaId, vaga: { id, cargo, empresa }, estudante: { id, nome, curso } }`
 - `GET /api/matches?vagaId=1` — só os de uma vaga
-- `GET /api/matches?...&desde=2026-11-01T00:00:00.000Z` — só os matches criados a partir da data (é o que o painel da empresa usa para "Matches este mês")
+- `GET /api/matches?...&desde=2026-11-01T00:00:00.000Z` — só os matches criados a partir da data (é o que o painel da empresa usa para "Matches este mês"). Uma data inválida retorna `400`
 
 ### Chat
 - `GET /api/mensagens/:matchId` — histórico de mensagens de um match

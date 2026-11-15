@@ -42,7 +42,7 @@ Assista ao vídeo de apresentação do projeto: [COLE-O-LINK-AQUI](COLE-O-LINK-A
 
 ## Modelo conceitual (diagrama ER)
 
-<img width="1180" height="696" alt="image" src="https://github.com/user-attachments/assets/dcdd994e-c6fa-4b67-bc90-b874f1b03897" />
+<img src="docs/modelo-er.jpg" alt="Diagrama ER do ConetaAI" width="1180" />
 
 
 Arquivo original em PDF: [docs/Modelo-ER.pdf](docs/Modelo-ER.pdf)
