@@ -13,6 +13,13 @@ O sistema calcula um **score de compatibilidade** entre cada estudante e cada va
 O site foi hospedado tanto o front-end quanto o back-end e o banco de dados utilizando três sites para hospedar: Render, Netlify e Neon. Segue o link para acesso:
 https://lovely-daffodil-fdc398.netlify.app/
 
+> **Aviso:** é um site de teste, criado com fins educacionais. As empresas, vagas e perfis são fictícios. Os logins de demonstração estão em [Logins de teste](#logins-de-teste).
+
+## Vídeo de apresentação
+
+<!-- Troque COLE-O-LINK-AQUI pelo endereço do vídeo (YouTube, Google Drive, etc.). -->
+Assista ao vídeo de apresentação do projeto: [COLE-O-LINK-AQUI](COLE-O-LINK-AQUI)
+
 ## Requisitos (regras de negócio)
 
 **O que deve ser armazenado**
@@ -217,7 +224,11 @@ front/                       interface web (HTML, CSS e JavaScript)
 docs/                        diagrama ER (imagem e PDF)
 ```
 
-## Como rodar
+## Como rodar na sua máquina
+
+> Estas instruções servem para rodar o projeto **somente no seu computador**, com o seu próprio PostgreSQL. Para apenas usar o sistema, acesse o [site hospedado](#link-do-site-hospedado): não é preciso instalar nada.
+>
+> A versão publicada deste repositório está configurada para a API hospedada no Render. Por isso, antes de abrir o front-end localmente, faça o **passo 3** abaixo para ele falar com a API da sua máquina.
 
 **1. Backend.** O PostgreSQL precisa estar rodando e o banco criado (veja [Banco de dados](#banco-de-dados-postgresql) abaixo). Dentro da pasta `back`, no **PowerShell**:
 
@@ -245,6 +256,14 @@ Ao iniciar, a API confere a conexão com o banco e mostra `Conectado ao PostgreS
 cd front
 npx serve
 ```
+
+**3. Apontar o front-end para a API local.** No topo de `front/script.js`, troque o endereço da API hospedada pelo da sua máquina:
+
+```js
+const API_BASE = "http://localhost:3000/api";
+```
+
+Não envie essa troca para o repositório (e, portanto, para o site hospedado): lá o endereço deve continuar sendo o da API no Render.
 
 Detalhes de cada parte: [back/README.md](back/README.md) e [front/README.md](front/README.md).
 
