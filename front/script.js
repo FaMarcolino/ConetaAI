@@ -968,6 +968,23 @@ function ativarArraste(stage, aoDecidir) {
 }
 
 /* =========================================================================
+   AVISO DE SITE DE TESTE
+   ========================================================================= */
+(function avisoSiteTeste() {
+  const overlay = document.getElementById("overlayAviso");
+  const botao = document.getElementById("botaoFecharAviso");
+  let jaViu = false;
+  try { jaViu = sessionStorage.getItem("avisoTesteVisto") === "1"; } catch (_) {}
+  if (jaViu) return;
+  overlay.classList.add("ativo");
+  botao.focus();
+  botao.addEventListener("click", () => {
+    overlay.classList.remove("ativo");
+    try { sessionStorage.setItem("avisoTesteVisto", "1"); } catch (_) {}
+  });
+})();
+
+/* =========================================================================
    INICIALIZAÇÃO
    ========================================================================= */
 carregarCatalogos();
